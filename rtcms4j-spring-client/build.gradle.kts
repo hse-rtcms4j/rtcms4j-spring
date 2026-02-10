@@ -17,21 +17,27 @@ val spec by configurations.registering {
 }
 
 dependencies {
+    api("ru.enzhine:rtcms4j-core-api")
     specDependency("ru.enzhine:rtcms4j-core-api")
+    api("ru.enzhine:rtcms4j-notify-api")
     specDependency("ru.enzhine:rtcms4j-notify-api")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("com.networknt:json-schema-validator")
+    api("org.springframework.boot:spring-boot-starter-oauth2-client")
+    api("org.springframework.boot:spring-boot-autoconfigure")
+    api("org.springframework.boot:spring-boot-autoconfigure")
+    api("org.springframework.boot:spring-boot-configuration-processor")
+    api("org.springframework:spring-web")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin")
+    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    api("org.jetbrains.kotlin:kotlin-reflect")
+    api("org.jetbrains.kotlin:kotlin-stdlib")
+    api("com.networknt:json-schema-validator")
+    api("com.github.victools:jsonschema-generator")
+    api("com.github.victools:jsonschema-module-jackson")
 
-//    testImplementation("org.springframework.boot:spring-boot-starter-test")
-//    testImplementation("io.cucumber:cucumber-jvm")
-//    testImplementation("io.cucumber:cucumber-spring")
-//    testImplementation("io.cucumber:cucumber-junit-platform-engine")
-//    testImplementation("org.junit.platform:junit-platform-suite")
-//    testImplementation("org.mockito:mockito-core")
-//    testImplementation("org.mockito.kotlin:mockito-kotlin")
+    testImplementation("org.junit.platform:junit-platform-suite")
+    testImplementation("org.mockito:mockito-core")
+    testImplementation("org.mockito.kotlin:mockito-kotlin")
 }
 
 val projectBuildDir = layout.buildDirectory.get()
@@ -44,9 +50,11 @@ tasks.register("generate-core-api", GenerateTask::class) {
     inputSpec.set(
         spec
             .flatMap { it.elements }
-            .map {
+            .map { archives ->
+                val archive = archives.single { it.asFile.name.contains("rtcms4j-core-api") }
+
                 resources.text
-                    .fromArchiveEntry(it, "static/openapi/core-api.yaml")
+                    .fromArchiveEntry(archive, "static/openapi/core-api.yaml")
                     .asFile()
                     .absolutePath
             },
@@ -56,7 +64,7 @@ tasks.register("generate-core-api", GenerateTask::class) {
 
     configOptions.set(
         mapOf(
-            "library" to "webclient",
+            "library" to "restclient",
             "documentationProvider" to "none",
             "openApiNullable" to "false",
             "useJakartaEe" to "true",
@@ -72,9 +80,11 @@ tasks.register("generate-notify-api", GenerateTask::class) {
     inputSpec.set(
         spec
             .flatMap { it.elements }
-            .map {
+            .map { archives ->
+                val archive = archives.single { it.asFile.name.contains("rtcms4j-notify-api") }
+
                 resources.text
-                    .fromArchiveEntry(it, "static/openapi/notify-api.yaml")
+                    .fromArchiveEntry(archive, "static/openapi/notify-api.yaml")
                     .asFile()
                     .absolutePath
             },
@@ -84,7 +94,7 @@ tasks.register("generate-notify-api", GenerateTask::class) {
 
     configOptions.set(
         mapOf(
-            "library" to "webclient",
+            "library" to "restclient",
             "documentationProvider" to "none",
             "openApiNullable" to "false",
             "useJakartaEe" to "true",

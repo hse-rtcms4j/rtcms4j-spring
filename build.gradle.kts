@@ -51,6 +51,10 @@ subprojects {
             val jsonSchemaValidatorVersion: String by project
             dependency("com.networknt:json-schema-validator:$jsonSchemaValidatorVersion")
 
+            val jsonSchemaGeneratorVersion: String by project
+            dependency("com.github.victools:jsonschema-generator:$jsonSchemaGeneratorVersion")
+            dependency("com.github.victools:jsonschema-module-jackson:$jsonSchemaGeneratorVersion")
+
             val cucumberVersion: String by project
             dependency("io.cucumber:cucumber-jvm:$cucumberVersion")
             dependency("io.cucumber:cucumber-spring:$cucumberVersion")
@@ -64,12 +68,18 @@ subprojects {
 
             val rtcms4jNotify: String by project
             dependency("ru.enzhine:rtcms4j-notify-api:$rtcms4jNotify")
+
+            val jacksonJsr310: String by project
+            dependency("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonJsr310")
         }
     }
 
     repositories {
         mavenLocal()
         mavenCentral()
+
+        github("hse-rtcms4j/rtcms4j-core")
+        github("hse-rtcms4j/rtcms4j-notify")
     }
 
     publishing {

@@ -22,3 +22,4 @@ pluginManagement {
 
 include("${rootProject.name}-client")
 include("${rootProject.name}-client-starter")
+include("${rootProject.name}-example")
