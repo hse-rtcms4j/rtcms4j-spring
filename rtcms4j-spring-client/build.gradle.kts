@@ -22,8 +22,6 @@ dependencies {
     api("ru.enzhine:rtcms4j-notify-api")
     specDependency("ru.enzhine:rtcms4j-notify-api")
 
-    api("org.springframework.boot:spring-boot-starter-oauth2-client")
-    api("org.springframework.boot:spring-boot-autoconfigure")
     api("org.springframework.boot:spring-boot-autoconfigure")
     api("org.springframework.boot:spring-boot-configuration-processor")
     api("org.springframework:spring-web")

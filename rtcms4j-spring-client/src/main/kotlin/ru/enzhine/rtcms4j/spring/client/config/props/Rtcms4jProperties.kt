@@ -9,4 +9,5 @@ data class Rtcms4jProperties(
     val namespaceId: Long,
     val applicationId: Long,
     val tokenRefreshOffset: Duration,
+    val pageSize: Long = 20,
 )

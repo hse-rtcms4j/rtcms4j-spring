@@ -1,10 +1,10 @@
-package ru.enzhine.rtcms4j.spring.client.infrastructure
+package ru.enzhine.rtcms4j.spring.client.service
 
 import org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE
 import org.springframework.context.annotation.Role
 import org.springframework.stereotype.Component
-import ru.enzhine.rtcms4j.spring.client.infrastructure.dto.RemoteConfigurationEntry
 import ru.enzhine.rtcms4j.spring.client.infrastructure.exception.RemoteConfigurationBeanRegistrationException
+import ru.enzhine.rtcms4j.spring.client.service.dto.RemoteConfigurationEntry
 
 @Role(ROLE_INFRASTRUCTURE)
 @Component

@@ -1,5 +1,6 @@
 package ru.enzhine.rtcms4j.spring.client.infrastructure
 
+import org.aopalliance.intercept.MethodInterceptor
 import org.slf4j.LoggerFactory
 import org.springframework.aop.TargetSource
 import org.springframework.aop.framework.ProxyFactory
@@ -23,7 +24,7 @@ class SimpleProxyGeneratorImpl : SimpleProxyGenerator {
         logger.debug("Initializing {} proxy factory...", targetClass)
         val proxyFactory =
             ProxyFactory(target).apply {
-                this.isProxyTargetClass = true
+                addAdvice(MethodInterceptor { invocation -> invocation.proceed() })
                 this.targetSource = targetSource
             }
         logger.debug("Initialized {} proxy factory. Creating proxy...", targetClass)

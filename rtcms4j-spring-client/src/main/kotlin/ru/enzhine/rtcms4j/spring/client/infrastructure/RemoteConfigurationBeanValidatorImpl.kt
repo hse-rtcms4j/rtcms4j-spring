@@ -81,16 +81,30 @@ class RemoteConfigurationBeanValidatorImpl : RemoteConfigurationBeanValidator {
                 )
             }
         }
-
-        val immutableProperties = availableBeanProperties.filter { !it.hasSetter() }.joinToString(", ") { it.name }
+        val immutableProperties = availableBeanProperties.filter { !it.hasSetter() }
         val requiresProxy = immutableProperties.isNotEmpty()
-        if (requiresProxy && Modifier.isFinal(beanClass.modifiers)) {
-            throw RemoteConfigurationBeanValidationException(
-                message =
-                    "RemoteConfiguration bean $beanName $beanClass requires proxy " +
-                        "(due to immutable properties: $immutableProperties), but class is final.",
-                parent = null,
-            )
+        if (requiresProxy) {
+            if (Modifier.isFinal(beanClass.modifiers)) {
+                throw RemoteConfigurationBeanValidationException(
+                    message =
+                        "RemoteConfiguration bean $beanName $beanClass requires proxy " +
+                            "(due to immutable properties: ${immutableProperties.joinToString(", ") { it.name }}" +
+                            "), but class is final.",
+                    parent = null,
+                )
+            }
+
+            for (immutableProperty in immutableProperties) {
+                if (Modifier.isFinal(immutableProperty.getter.modifiers)) {
+                    throw RemoteConfigurationBeanValidationException(
+                        message =
+                            "RemoteConfiguration bean $beanName $beanClass requires proxy " +
+                                "(due to immutable properties: ${immutableProperties.joinToString(", ") { it.name }}" +
+                                "), but property ${immutableProperty.name} is final.",
+                        parent = null,
+                    )
+                }
+            }
         }
 
         beanDefinition.setAttribute("requiresProxy", requiresProxy)

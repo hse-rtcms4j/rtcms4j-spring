@@ -1,6 +1,6 @@
-package ru.enzhine.rtcms4j.spring.client.infrastructure
+package ru.enzhine.rtcms4j.spring.client.service
 
-import ru.enzhine.rtcms4j.spring.client.infrastructure.dto.RemoteConfigurationEntry
+import ru.enzhine.rtcms4j.spring.client.service.dto.RemoteConfigurationEntry
 
 interface RemoteConfigurationRegistry {
     fun register(entry: RemoteConfigurationEntry)

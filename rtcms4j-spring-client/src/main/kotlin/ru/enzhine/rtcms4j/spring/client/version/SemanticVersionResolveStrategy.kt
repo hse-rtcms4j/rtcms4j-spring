@@ -35,9 +35,9 @@ class SemanticVersionResolveStrategy(
                 true
             } else if (semanticVersionResolveProperties.applyDifferentFix && new.fix != prev.fix) {
                 true
+            } else {
+                false
             }
-
-            false
         } catch (ex: RuntimeException) {
             logger.error("Ignoring version '$newVersion'.", ex)
             false

@@ -1,5 +1,6 @@
-package ru.enzhine.rtcms4j.spring.client.infrastructure.dto
+package ru.enzhine.rtcms4j.spring.client.service.dto
 
+import com.fasterxml.jackson.databind.ObjectReader
 import org.springframework.aop.target.HotSwappableTargetSource
 import ru.enzhine.rtcms4j.spring.client.version.VersionResolveStrategy
 
@@ -10,6 +11,6 @@ data class RemoteConfigurationEntry(
     val configId: Long?,
     var version: String,
     val versionResolveStrategy: VersionResolveStrategy,
-    val mutableInstance: Any?,
+    val mutableObjectReader: ObjectReader?,
     val mutableTargetSource: HotSwappableTargetSource?,
 )

@@ -2,27 +2,18 @@ server:
   port: 8079
 
 spring:
-  security:
-    oauth2:
-      client:
-        provider:
-          keycloak:
-            issuer-uri: http://localhost:8080/realms/rtcms4j
-        registration:
-          rtcms4j-client:
-            provider: keycloak
-            authorization-grant-type: client_credentials
-            client-id: ns2_app6
-            client-secret: Lv1nfky2h3YBn0Q2mONedLSop2iJttFR
-
   rtcms4j:
+    enabled: true
     namespace-id: 2
     application-id: 6
     api:
       core-base-url: http://localhost:8081/api/v1
       notify-base-url: http://localhost:8082/api/v1
     token-refresh-offset: 10m
+    keycloak:
+      server-url: http://localhost:8080
+      client-id: ns2_app6
+      client-secret: Lv1nfky2h3YBn0Q2mONedLSop2iJttFR
 
 feature-config:
   hello-whom: World
-  flag: true
