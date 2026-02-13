@@ -34,12 +34,13 @@ class BackendConfigurationProviderImpl(
                     this.size = pageSize
                 }
 
-            val pagedModel = coreApi.findAllConfigurations(nid, aid, null, pageable)
-            pagedModel.content!!.forEach {
+            val pagedModel = coreApi.findAllConfigurations(nid, aid, null, pageable)!!
+            pagedModel.content.forEach {
                 backendEntries.add(
                     BackendConfigurationEntry(
                         configName = it.name,
                         configId = it.id,
+                        version = it.commitVersion,
                     ),
                 )
             }

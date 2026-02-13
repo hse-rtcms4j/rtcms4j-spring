@@ -21,13 +21,39 @@ class SemanticVersionResolveStrategy(
 
     private val regex = Regex(semanticVersionResolveProperties.semVerPattern)
 
-    override fun shouldApplyNewVersion(
-        previousVersion: String,
-        newVersion: String,
+    override fun shouldPostNewVersion(
+        remoteVersion: String?,
+        currentVersion: String,
     ): Boolean =
         try {
-            val new = retrieveSemVer(newVersion)
-            val prev = retrieveSemVer(previousVersion)
+            if (remoteVersion == null) {
+                true
+            } else {
+                val new = retrieveSemVer(currentVersion)
+                val prev = retrieveSemVer(remoteVersion)
+
+                if (new.major.toLong() > prev.major.toLong()) {
+                    true
+                } else if (new.minor.toLong() > prev.minor.toLong()) {
+                    true
+                } else if (new.fix.toLong() > prev.fix.toLong()) {
+                    true
+                } else {
+                    false
+                }
+            }
+        } catch (ex: RuntimeException) {
+            logger.error("Ignoring version '$currentVersion'.", ex)
+            false
+        }
+
+    override fun shouldApplyNewVersion(
+        currentVersion: String,
+        newRemoteVersion: String,
+    ): Boolean =
+        try {
+            val new = retrieveSemVer(newRemoteVersion)
+            val prev = retrieveSemVer(currentVersion)
 
             if (semanticVersionResolveProperties.applyDifferentMajor && new.major != prev.major) {
                 true
@@ -39,7 +65,7 @@ class SemanticVersionResolveStrategy(
                 false
             }
         } catch (ex: RuntimeException) {
-            logger.error("Ignoring version '$newVersion'.", ex)
+            logger.error("Ignoring version '$newRemoteVersion'.", ex)
             false
         }
 
@@ -49,20 +75,24 @@ class SemanticVersionResolveStrategy(
                 ?: throw RuntimeException("Version '$version' is not a SemVer string.")
         val major =
             semVersion.groups["major"]?.value
-                ?: throw RuntimeException("SemVer '$version' does not has major.")
+                ?: throw RuntimeException("SemVer '$version' does not has major part.")
         val minor =
             semVersion.groups["minor"]?.value
-                ?: throw RuntimeException("Version '$version' does not has minor.")
+                ?: throw RuntimeException("Version '$version' does not has minor part.")
         val fix =
             semVersion.groups["fix"]?.value
-                ?: throw RuntimeException("Version '$version' does not has fix.")
+                ?: throw RuntimeException("Version '$version' does not has fix part.")
+        val extra =
+            semVersion.groups["extra"]?.value
+                ?: throw RuntimeException("Version '$version' does not has extra part.")
 
-        return SemVer(major, minor, fix)
+        return SemVer(major, minor, fix, extra)
     }
 
     private data class SemVer(
         val major: String,
         val minor: String,
         val fix: String,
+        val extra: String,
     )
 }

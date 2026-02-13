@@ -5,6 +5,8 @@ import org.springframework.context.SmartLifecycle
 import org.springframework.stereotype.Component
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationManager
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationRegistry
+import ru.enzhine.rtcms4j.spring.client.service.dto.RemoteConfigurationEntry
+import ru.enzhine.rtcms4j.spring.client.service.exception.BackendConfigurationException
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Component
@@ -51,7 +53,35 @@ class RemoteConfigurationOperator(
 
     private fun initialize() {
         remoteConfigurationRegistry.entries().forEach {
-            configurationManager.fetchRemoteAndUpdate(it)
+            sync(it)
+        }
+    }
+
+    private fun sync(remoteConfigurationEntry: RemoteConfigurationEntry) {
+        try {
+            val remoteState = configurationManager.fetchRemote(remoteConfigurationEntry)
+
+            val versionResolver = remoteConfigurationEntry.versionResolveStrategy
+            val remoteVersion = remoteState.version
+            val currentVersion = remoteConfigurationEntry.version
+            if (
+                remoteVersion != currentVersion &&
+                versionResolver.shouldPostNewVersion(remoteVersion, currentVersion)
+            ) {
+                configurationManager.commitToRemote(remoteConfigurationEntry)
+                return
+            }
+
+            configurationManager.tryUpdateValuesByRemote(
+                remoteConfigurationEntry,
+                remoteVersion,
+                remoteState.jsonValues,
+            )
+        } catch (_: BackendConfigurationException.NotFound) {
+            configurationManager.createNewRemote(remoteConfigurationEntry)
+            configurationManager.commitToRemote(remoteConfigurationEntry)
+        } catch (_: BackendConfigurationException.NoState) {
+            configurationManager.commitToRemote(remoteConfigurationEntry)
         }
     }
 }

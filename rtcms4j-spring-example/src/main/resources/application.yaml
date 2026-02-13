@@ -14,6 +14,3 @@ spring:
       server-url: http://localhost:8080
       client-id: ns2_app6
       client-secret: Lv1nfky2h3YBn0Q2mONedLSop2iJttFR
-
-feature-config:
-  hello-whom: World

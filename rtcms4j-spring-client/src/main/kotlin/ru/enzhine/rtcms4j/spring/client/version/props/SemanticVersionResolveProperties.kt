@@ -10,5 +10,5 @@ data class SemanticVersionResolveProperties(
     val applyDifferentMajor: Boolean = false,
     val applyDifferentMinor: Boolean = true,
     val applyDifferentFix: Boolean = true,
-    val semVerPattern: String = "^(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<fix>.+)$",
+    val semVerPattern: String = "^(?<major>[0-9]+)\\.(?<minor>[0-9]+)\\.(?<fix>[0-9]+)(?<extra>.*)$",
 )

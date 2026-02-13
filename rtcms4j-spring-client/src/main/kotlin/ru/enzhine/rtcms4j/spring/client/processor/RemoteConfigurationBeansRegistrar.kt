@@ -1,6 +1,5 @@
 package ru.enzhine.rtcms4j.spring.client.processor
 
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -20,6 +19,8 @@ import ru.enzhine.rtcms4j.spring.client.annotation.RemoteConfiguration
 import ru.enzhine.rtcms4j.spring.client.infrastructure.SimpleProxyGenerator
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationRegistry
 import ru.enzhine.rtcms4j.spring.client.service.dto.RemoteConfigurationEntry
+import ru.enzhine.rtcms4j.spring.client.service.dto.mutator.ImmutableConfigurationMutator
+import ru.enzhine.rtcms4j.spring.client.service.dto.mutator.MutableConfigurationMutator
 import ru.enzhine.rtcms4j.spring.client.version.VersionResolveStrategy
 
 @Component
@@ -41,7 +42,6 @@ class RemoteConfigurationBeansRegistrar(
         ObjectMapper().apply {
             registerModule(JavaTimeModule())
             registerKotlinModule()
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
 
     override fun setEmbeddedValueResolver(resolver: StringValueResolver) {
@@ -84,46 +84,32 @@ class RemoteConfigurationBeansRegistrar(
             logger.warn("InitRelevant is not supported yet.")
         }
 
-        var entry: RemoteConfigurationEntry
-        var returnBean: Any
+        var returnBean = bean
 
         val requiresProxy = definition.getAttribute("requiresProxy") as Boolean
-        if (requiresProxy) {
-            val targetSource = HotSwappableTargetSource(bean)
-            val proxy = simpleProxyGenerator.wrapObject(bean, targetSource)
+        val mutator =
+            if (requiresProxy) {
+                val swappableTargetSource = HotSwappableTargetSource(bean)
+                val proxy = simpleProxyGenerator.wrapObject(bean, swappableTargetSource)
+                returnBean = proxy
 
-            entry =
-                RemoteConfigurationEntry(
-                    beanName = beanName,
-                    beanClass = clazz,
-                    configName = configurationName,
-                    configId = configurationId,
-                    version = configurationVersion,
-                    versionResolveStrategy = versionResolveStrategy,
-                    mutableObjectReader = null,
-                    mutableTargetSource = targetSource,
-                )
+                ImmutableConfigurationMutator(objectMapper, swappableTargetSource)
+            } else {
+                MutableConfigurationMutator(objectMapper, bean, clazz)
+            }
 
-            returnBean = proxy
-        } else {
-            val objectReader = objectMapper.readerForUpdating(bean)
+        remoteConfigurationRegistry.register(
+            RemoteConfigurationEntry(
+                beanName = beanName,
+                beanClass = clazz,
+                configName = configurationName,
+                configId = configurationId,
+                version = configurationVersion,
+                versionResolveStrategy = versionResolveStrategy,
+                configurationMutator = mutator,
+            ),
+        )
 
-            entry =
-                RemoteConfigurationEntry(
-                    beanName = beanName,
-                    beanClass = clazz,
-                    configName = configurationName,
-                    configId = configurationId,
-                    version = configurationVersion,
-                    versionResolveStrategy = versionResolveStrategy,
-                    mutableObjectReader = objectReader,
-                    mutableTargetSource = null,
-                )
-
-            returnBean = bean
-        }
-
-        remoteConfigurationRegistry.register(entry)
         return returnBean
     }
 

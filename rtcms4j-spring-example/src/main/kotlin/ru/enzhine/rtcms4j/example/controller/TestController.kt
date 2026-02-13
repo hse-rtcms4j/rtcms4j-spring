@@ -10,6 +10,9 @@ class TestController(
 ) {
     @GetMapping("/hello")
     fun hello(): String {
+        if (Math.random() > featureConfig.secretChance) {
+            return "I always come back!"
+        }
         val whom = featureConfig.helloWhom
         return "Hello, $whom!"
     }
