@@ -1,5 +1,6 @@
 package ru.enzhine.rtcms4j.spring.client.processor
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -42,6 +43,7 @@ class RemoteConfigurationBeansRegistrar(
         ObjectMapper().apply {
             registerModule(JavaTimeModule())
             registerKotlinModule()
+            disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         }
 
     override fun setEmbeddedValueResolver(resolver: StringValueResolver) {

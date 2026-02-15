@@ -33,19 +33,8 @@ class RemoteConfigurationManagerImpl(
         JsonValuesHelperImpl(objectMapper)
 
     override fun tryUpdate(remoteConfigurationEntries: List<RemoteConfigurationEntry>) {
-        if (
-            remoteConfigurationEntries
-                .any {
-                    try {
-                        tryUpdateOrCreateSingle(it)
-                    } catch (ex: BackendConfigurationException.FetchFailed) {
-                        false
-                    } catch (ex: BackendConfigurationException.CreateFailed) {
-                        false
-                    }
-                }
-        ) {
-            backendConfigurationProvider.evictBackendConfigurations()
+        remoteConfigurationEntries.forEach {
+            tryUpdateOrCreateSingle(it)
         }
     }
 
@@ -90,6 +79,7 @@ class RemoteConfigurationManagerImpl(
             return false
         } catch (_: BackendConfigurationException.NotFound) {
             createNewRemote(remoteConfigurationEntry)
+            backendConfigurationProvider.evictBackendConfigurations()
             commitToRemote(remoteConfigurationEntry)
 
             return true
