@@ -78,11 +78,6 @@ class RemoteConfigurationBeansRegistrar(
         val configurationId = getConfigurationId(annotation)
         val configurationVersion = getConfigurationVersion(annotation)
         val versionResolveStrategy = getConfigurationVersionResolveStrategy(annotation)
-        val isInitRelevant = getInitRelevant(annotation)
-
-        if (isInitRelevant) {
-            logger.warn("InitRelevant is not supported yet.")
-        }
 
         var returnBean = bean
 
@@ -153,8 +148,6 @@ class RemoteConfigurationBeansRegistrar(
 
         return strategy
     }
-
-    private fun getInitRelevant(annotation: MergedAnnotation<RemoteConfiguration>): Boolean = annotation.getBoolean("initRelevant")
 
     private fun resolveSpelString(expression: String) =
         try {

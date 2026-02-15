@@ -6,6 +6,8 @@ import java.time.Instant
 interface KeycloakClient {
     fun getKeycloakToken(): TokenResponse
 
+    fun rotateSecret(newSecret: String)
+
     data class TokenResponse(
         @field:JsonProperty("access_token")
         val accessToken: String,

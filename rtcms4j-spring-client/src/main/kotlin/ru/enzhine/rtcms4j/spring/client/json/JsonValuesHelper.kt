@@ -6,5 +6,5 @@ interface JsonValuesHelper {
         version: String,
     ): String
 
-    fun excludeVersionFromValuesString(values: String): String
+    fun extractVersionFromValuesString(values: String): Pair<String, String>
 }

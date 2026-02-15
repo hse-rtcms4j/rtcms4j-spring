@@ -3,20 +3,22 @@ package ru.enzhine.rtcms4j.spring.client.version
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Role
 import org.springframework.stereotype.Component
-import ru.enzhine.rtcms4j.spring.client.version.SemanticVersionResolveStrategy.Companion.VERSION_RESOLVE_STRATEGY_SEM_VER_NAME
+import ru.enzhine.rtcms4j.spring.client.version.SemanticVersionResolveStrategy.Companion.VERSION_RESOLVE_STRATEGY_SEMVER_NAME
 import ru.enzhine.rtcms4j.spring.client.version.props.SemanticVersionResolveProperties
 
 @Role(ROLE_INFRASTRUCTURE)
 @EnableConfigurationProperties(SemanticVersionResolveProperties::class)
-@Component(VERSION_RESOLVE_STRATEGY_SEM_VER_NAME)
+@Primary
+@Component(VERSION_RESOLVE_STRATEGY_SEMVER_NAME)
 class SemanticVersionResolveStrategy(
     private val semanticVersionResolveProperties: SemanticVersionResolveProperties,
 ) : VersionResolveStrategy {
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
-        const val VERSION_RESOLVE_STRATEGY_SEM_VER_NAME = "SemVer"
+        const val VERSION_RESOLVE_STRATEGY_SEMVER_NAME = "semver"
     }
 
     private val regex = Regex(semanticVersionResolveProperties.semVerPattern)

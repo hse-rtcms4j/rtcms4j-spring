@@ -11,6 +11,8 @@ class KeycloakClientImpl(
 ) : KeycloakClient {
     private val restClient = RestClient.create()
 
+    private var actualSecret = keycloakProperties.clientSecret
+
     override fun getKeycloakToken(): KeycloakClient.TokenResponse =
         restClient
             .post()
@@ -19,11 +21,15 @@ class KeycloakClientImpl(
             .body(
                 "grant_type=client_credentials&" +
                     "client_id=${keycloakProperties.clientId}&" +
-                    "client_secret=${keycloakProperties.clientSecret}",
+                    "client_secret=$actualSecret",
             ).retrieve()
             .body(KeycloakClient.TokenResponse::class.java)
             ?: throw RuntimeException("KeycloakClient unknown response (null).")
 
     private fun buildTokenUrl(keycloakProperties: KeycloakProperties) =
         "${keycloakProperties.serverUrl}/realms/${keycloakProperties.realm}/protocol/openid-connect/token"
+
+    override fun rotateSecret(newSecret: String) {
+        actualSecret = newSecret
+    }
 }

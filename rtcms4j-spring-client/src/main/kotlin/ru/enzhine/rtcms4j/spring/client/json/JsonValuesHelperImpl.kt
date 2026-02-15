@@ -26,9 +26,9 @@ class JsonValuesHelperImpl(
         }
     }
 
-    override fun excludeVersionFromValuesString(values: String): String {
+    override fun extractVersionFromValuesString(values: String): Pair<String, String> {
         val objectNode = objectMapper.readTree(values) as ObjectNode
-        objectNode.remove("version")
-        return objectNode.toString()
+        val versionNode = objectNode.remove("version")
+        return versionNode.asText() to objectNode.toString()
     }
 }

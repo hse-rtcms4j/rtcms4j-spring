@@ -11,4 +11,14 @@ data class RemoteConfigurationEntry(
     var version: String,
     val versionResolveStrategy: VersionResolveStrategy,
     val configurationMutator: ConfigurationMutator,
-)
+) {
+    fun describe(): String {
+        val sb = StringBuilder()
+        sb.append("RemoteConfiguration $beanName")
+        if (configId != null) {
+            sb.append(" with id=$configId")
+        }
+        sb.append(" with version=$version")
+        return sb.toString()
+    }
+}

@@ -3,10 +3,12 @@ package ru.enzhine.rtcms4j.spring.client.service
 import org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE
 import org.springframework.context.annotation.Role
 import org.springframework.stereotype.Component
+import org.springframework.web.client.RestClientResponseException
 import ru.enzhine.rtcms4j.core.api.CoreApi
 import ru.enzhine.rtcms4j.core.api.dto.Pageable
 import ru.enzhine.rtcms4j.spring.client.config.props.Rtcms4jProperties
 import ru.enzhine.rtcms4j.spring.client.service.dto.BackendConfigurationEntry
+import ru.enzhine.rtcms4j.spring.client.service.exception.BackendConfigurationException
 
 @Role(ROLE_INFRASTRUCTURE)
 @Component
@@ -34,7 +36,16 @@ class BackendConfigurationProviderImpl(
                     this.size = pageSize
                 }
 
-            val pagedModel = coreApi.findAllConfigurations(nid, aid, null, pageable)!!
+            val pagedModel =
+                try {
+                    coreApi.findAllConfigurations(nid, aid, null, pageable)!!
+                } catch (ex: RestClientResponseException) {
+                    throw BackendConfigurationException.FetchFailed(
+                        message = "No backend configurations accessible.",
+                        parent = ex,
+                    )
+                }
+
             pagedModel.content.forEach {
                 backendEntries.add(
                     BackendConfigurationEntry(

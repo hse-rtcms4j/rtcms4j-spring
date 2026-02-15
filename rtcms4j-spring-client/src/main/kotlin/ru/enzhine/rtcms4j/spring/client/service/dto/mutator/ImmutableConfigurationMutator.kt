@@ -29,8 +29,7 @@ class ImmutableConfigurationMutator(
     override fun getJsonValuesWithVersion(version: String): String = jsonValuesHelper.generateValues(getTarget(), version)
 
     override fun updateValues(jsonValues: String) {
-        val content =
-            jsonValuesHelper.excludeVersionFromValuesString(jsonValues)
+        val (_, content) = jsonValuesHelper.extractVersionFromValuesString(jsonValues)
 
         val newTarget = objectMapper.readValue(content, swappableTargetSource.targetClass)
         swappableTargetSource.swap(newTarget)

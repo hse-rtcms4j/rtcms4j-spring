@@ -34,8 +34,7 @@ class MutableConfigurationMutator(
     override fun getJsonValuesWithVersion(version: String) = jsonValuesHelper.generateValues(getTarget(), version)
 
     override fun updateValues(jsonValues: String) {
-        val src =
-            jsonValuesHelper.excludeVersionFromValuesString(jsonValues)
+        val (_, src) = jsonValuesHelper.extractVersionFromValuesString(jsonValues)
 
         objectReader.readValue(src, mutableObjectClass)
     }

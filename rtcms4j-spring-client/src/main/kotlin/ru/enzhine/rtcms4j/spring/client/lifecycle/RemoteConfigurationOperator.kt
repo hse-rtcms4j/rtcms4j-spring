@@ -3,16 +3,12 @@ package ru.enzhine.rtcms4j.spring.client.lifecycle
 import org.slf4j.LoggerFactory
 import org.springframework.context.SmartLifecycle
 import org.springframework.stereotype.Component
-import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationManager
-import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationRegistry
-import ru.enzhine.rtcms4j.spring.client.service.dto.RemoteConfigurationEntry
-import ru.enzhine.rtcms4j.spring.client.service.exception.BackendConfigurationException
+import ru.enzhine.rtcms4j.spring.client.lifecycle.strategy.RemoteMaintainerStrategy
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Component
 class RemoteConfigurationOperator(
-    private val remoteConfigurationRegistry: RemoteConfigurationRegistry,
-    private val configurationManager: RemoteConfigurationManager,
+    private val remoteMaintainerStrategy: RemoteMaintainerStrategy,
 ) : SmartLifecycle {
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
@@ -52,36 +48,6 @@ class RemoteConfigurationOperator(
     override fun isRunning(): Boolean = isRunning.get()
 
     private fun initialize() {
-        remoteConfigurationRegistry.entries().forEach {
-            sync(it)
-        }
-    }
-
-    private fun sync(remoteConfigurationEntry: RemoteConfigurationEntry) {
-        try {
-            val remoteState = configurationManager.fetchRemote(remoteConfigurationEntry)
-
-            val versionResolver = remoteConfigurationEntry.versionResolveStrategy
-            val remoteVersion = remoteState.version
-            val currentVersion = remoteConfigurationEntry.version
-            if (
-                remoteVersion != currentVersion &&
-                versionResolver.shouldPostNewVersion(remoteVersion, currentVersion)
-            ) {
-                configurationManager.commitToRemote(remoteConfigurationEntry)
-                return
-            }
-
-            configurationManager.tryUpdateValuesByRemote(
-                remoteConfigurationEntry,
-                remoteVersion,
-                remoteState.jsonValues,
-            )
-        } catch (_: BackendConfigurationException.NotFound) {
-            configurationManager.createNewRemote(remoteConfigurationEntry)
-            configurationManager.commitToRemote(remoteConfigurationEntry)
-        } catch (_: BackendConfigurationException.NoState) {
-            configurationManager.commitToRemote(remoteConfigurationEntry)
-        }
+        remoteMaintainerStrategy.maintain()
     }
 }
