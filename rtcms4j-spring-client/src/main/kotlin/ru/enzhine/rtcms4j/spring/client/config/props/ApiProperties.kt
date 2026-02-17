@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "spring.rtcms4j.api")
 data class ApiProperties(
-    val coreBaseUrl: String,
-    val notifyBaseUrl: String,
+    val baseUrl: String?,
+    val coreBaseUrl: String?,
+    val notifyBaseUrl: String?,
 )

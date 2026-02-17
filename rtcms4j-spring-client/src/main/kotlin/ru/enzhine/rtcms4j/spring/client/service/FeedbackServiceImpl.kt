@@ -17,6 +17,12 @@ class FeedbackServiceImpl(
         private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
     }
 
+    private val rtcms4jClientName = rtcms4jProperties.clientName
+
+    init {
+        logger.info("Application will be identified to RTCMS4J as '$rtcms4jClientName'.")
+    }
+
     override fun postFeedbackOnConfiguration(
         configId: Long,
         version: String,
@@ -27,7 +33,7 @@ class FeedbackServiceImpl(
 
         val request =
             ConfigurationFeedbackRequestDto().apply {
-                clientName = rtcms4jProperties.clientName
+                clientName = rtcms4jClientName
                 appliedVersion = version
             }
 
@@ -44,7 +50,7 @@ class FeedbackServiceImpl(
 
         val request =
             ApplicationFeedbackRequestDto().apply {
-                clientName = rtcms4jProperties.clientName
+                clientName = rtcms4jClientName
                 isSecretRotated = true
             }
 

@@ -22,7 +22,7 @@ class Rtcms4jConfig {
         coreApiProperties: ApiProperties,
         jwtTokenProvider: JwtTokenProvider,
     ) = CoreApi().apply {
-        apiClient.basePath = coreApiProperties.coreBaseUrl
+        apiClient.basePath = coreApiProperties.baseUrl ?: coreApiProperties.coreBaseUrl
         apiClient.setBearerToken(jwtTokenProvider::getToken)
     }
 
@@ -31,7 +31,7 @@ class Rtcms4jConfig {
         coreApiProperties: ApiProperties,
         jwtTokenProvider: JwtTokenProvider,
     ) = NotifyApi().apply {
-        apiClient.basePath = coreApiProperties.notifyBaseUrl
+        apiClient.basePath = coreApiProperties.baseUrl ?: coreApiProperties.notifyBaseUrl
         apiClient.setBearerToken(jwtTokenProvider::getToken)
     }
 }
