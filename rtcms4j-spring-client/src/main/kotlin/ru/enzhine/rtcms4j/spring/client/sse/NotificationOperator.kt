@@ -112,8 +112,11 @@ class NotificationOperator(
         }
     }
 
-    private fun closeConnection() {
-        val con = connection
-        con?.close()
-    }
+    private fun closeConnection() =
+        try {
+            val con = connection
+            con?.close()
+            Unit
+        } catch (ignored: Throwable) {
+        }
 }

@@ -1,5 +1,5 @@
 server:
-  port: 8079
+  port: 8078
 
 spring:
   rtcms4j:
@@ -13,6 +13,6 @@ spring:
     keycloak:
       server-url: http://localhost:8080
       client-id: ns2_app6
-      client-secret: vG5t2ZYBQPMWPPbcgvSqhqDNxOCqRzJm
+      client-secret: DIFjLX2OjWWpXLoUJq5mzbmXywVy1ZoC
     maintain:
       type: stream
