@@ -102,6 +102,7 @@ class NotificationOperator(
     }
 
     private fun onError(throwable: Throwable) {
+        // TODO: exponential backoff
         if (isInitialized.get()) {
             logger.error("Notification SSE connection was interrupted.", throwable)
             closeConnection()

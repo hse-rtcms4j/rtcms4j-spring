@@ -1,18 +1,18 @@
 server:
-  port: 8078
+  port: 8079
 
 spring:
   rtcms4j:
     enabled: true
-    namespace-id: 2
-    application-id: 6
+    namespace-id: 1
+    application-id: 1
     api:
       core-base-url: http://localhost:8000/core/api/v1
       notify-base-url: http://localhost:8000/notify/api/v1
     token-refresh-offset: 10m
     keycloak:
       server-url: http://localhost:8080
-      client-id: ns2_app6
-      client-secret: DIFjLX2OjWWpXLoUJq5mzbmXywVy1ZoC
+      client-id: ns1_app1
+      client-secret: gE9krmATYx6QfD2Rzltwf6tXPTXCPDNK
     maintain:
       type: stream

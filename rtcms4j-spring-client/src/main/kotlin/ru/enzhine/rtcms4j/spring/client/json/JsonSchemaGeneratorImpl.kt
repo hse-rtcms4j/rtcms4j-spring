@@ -46,7 +46,7 @@ class JsonSchemaGeneratorImpl(
                 val versionSchema =
                     objectMapper.createObjectNode().apply {
                         put("type", "string")
-                        put("description", "Schema version")
+                        put("description", "Commit compatibility version.")
                     }
                 properties.set<ObjectNode>("version", versionSchema)
             }
