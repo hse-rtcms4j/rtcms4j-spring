@@ -3,25 +3,18 @@ package ru.enzhine.rtcms4j.spring.client.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClientResponseException
-import ru.enzhine.rtcms4j.core.api.CoreApi
-import ru.enzhine.rtcms4j.core.api.dto.ConfigurationCommitRequest
-import ru.enzhine.rtcms4j.core.api.dto.ConfigurationDtoCreateRequest
-import ru.enzhine.rtcms4j.core.api.dto.SourceType
-import ru.enzhine.rtcms4j.spring.client.config.props.Rtcms4jProperties
+import ru.enzhine.rtcms4j.spring.client.config.props.FeaturesProperties
 import ru.enzhine.rtcms4j.spring.client.json.JsonValuesHelper
 import ru.enzhine.rtcms4j.spring.client.json.JsonValuesHelperImpl
-import ru.enzhine.rtcms4j.spring.client.mapper.toService
 import ru.enzhine.rtcms4j.spring.client.service.dto.BackendConfigurationEntry
-import ru.enzhine.rtcms4j.spring.client.service.dto.BackendState
 import ru.enzhine.rtcms4j.spring.client.service.dto.RemoteConfigurationEntry
 import ru.enzhine.rtcms4j.spring.client.service.exception.BackendConfigurationException
+import ru.enzhine.rtcms4j.spring.client.version.exception.RemoteConfigurationVersionException
 
 @Service
 class RemoteConfigurationManagerImpl(
-    private val backendConfigurationProvider: BackendConfigurationProvider,
-    private val rtcms4jProperties: Rtcms4jProperties,
-    private val coreApi: CoreApi,
+    private val backendConfigurationService: BackendConfigurationService,
+    private val featuresProperties: FeaturesProperties,
     private val feedbackService: FeedbackService,
     objectMapper: ObjectMapper,
 ) : RemoteConfigurationManager {
@@ -32,202 +25,140 @@ class RemoteConfigurationManagerImpl(
     private val jsonValuesHelper: JsonValuesHelper =
         JsonValuesHelperImpl(objectMapper)
 
-    override fun tryUpdate(remoteConfigurationEntries: List<RemoteConfigurationEntry>) {
-        remoteConfigurationEntries.forEach {
-            tryUpdateOrCreateSingle(it)
+    override fun tryUpdateMultipleAuto(remoteConfigurations: List<RemoteConfigurationEntry>): Int {
+        val backendConfigurations = backendConfigurationService.getBackendConfigurations()
+        var updatedCount = 0
+
+        for (remoteConfig in remoteConfigurations) {
+            val backendConfig =
+                backendConfigurations.find { it.configurationId == remoteConfig.configurationId }
+                    ?: if (featuresProperties.skipConfigurationOnRemoteLostFailure) {
+                        logger.warn("{} not found on last fetch.", remoteConfig.describe())
+                        continue
+                    } else {
+                        throw BackendConfigurationException.NotFound(
+                            "${remoteConfig.describe()} not found on last fetch.",
+                        )
+                    }
+
+            try {
+                if (updateConfiguration(remoteConfig, backendConfig)) {
+                    updatedCount++
+                }
+            } catch (ex: RemoteConfigurationVersionException) {
+                if (featuresProperties.skipConfigurationOnVersionFailure) {
+                    logger.warn("${remoteConfig.describe()} version resolve failed during update.", ex)
+                } else {
+                    throw ex
+                }
+            } catch (ex: BackendConfigurationException.CommitFailed) {
+                if (featuresProperties.skipConfigurationOnCommitFailure) {
+                    logger.warn("${remoteConfig.describe()} new version commit failed during update.", ex)
+                } else {
+                    throw ex
+                }
+            } catch (ex: BackendConfigurationException.FetchFailed) {
+                if (featuresProperties.skipConfigurationOnFetchFailure) {
+                    logger.warn("${remoteConfig.describe()} remote version fetch failed during update.", ex)
+                } else {
+                    throw ex
+                }
+            }
         }
+
+        return updatedCount
+    }
+
+    private fun updateConfiguration(
+        remoteConfig: RemoteConfigurationEntry,
+        backendConfig: BackendConfigurationEntry,
+    ): Boolean {
+        val configurationId = remoteConfig.configurationId
+        val configurationMutator = remoteConfig.localEntry.configurationMutator
+
+        if (shouldPostNewVersion(remoteConfig, backendConfig)) {
+            backendConfigurationService.commitToRemote(
+                configurationId,
+                configurationMutator,
+                remoteConfig.currentVersion,
+            )
+            logger.info("Commited new ${remoteConfig.describe()}.")
+            feedbackService.postFeedbackOnConfiguration(configurationId, remoteConfig.currentVersion)
+
+            return true
+        }
+
+        val nextVersion =
+            backendConfig.version
+                ?: run {
+                    logger.warn(
+                        "Remote-configuration with id='$configurationId' " +
+                            "ignored: was not commited and has no state.",
+                    )
+                    return false
+                }
+        if (shouldApplyNewVersion(remoteConfig, nextVersion)) {
+            val remoteState =
+                backendConfigurationService.fetchRemote(configurationId)
+                    ?: throw BackendConfigurationException.FetchFailed(
+                        "Remote-configuration with id '$configurationId' " +
+                            "is stateful, but empty state fetched.",
+                    )
+
+            configurationMutator.updateValues(remoteState.jsonValues)
+            remoteConfig.currentVersion = remoteState.version
+            feedbackService.postFeedbackOnConfiguration(configurationId, remoteConfig.currentVersion)
+            logger.info("Updated ${remoteConfig.describe()}.")
+
+            return true
+        }
+
+        logger.info("$remoteConfig ignored version: $nextVersion")
+        return false
+    }
+
+    private fun shouldPostNewVersion(
+        remoteConfig: RemoteConfigurationEntry,
+        backendConfig: BackendConfigurationEntry,
+    ): Boolean {
+        val remoteVersion = backendConfig.version
+        val versionResolver = remoteConfig.localEntry.versionResolveStrategy
+        val currentVersion = remoteConfig.currentVersion
+
+        return remoteVersion != currentVersion &&
+            versionResolver.shouldPostNewVersion(remoteVersion, currentVersion)
+    }
+
+    private fun shouldApplyNewVersion(
+        remoteConfig: RemoteConfigurationEntry,
+        nextVersion: String,
+    ): Boolean {
+        val versionResolver = remoteConfig.localEntry.versionResolveStrategy
+        val currentVersion = remoteConfig.currentVersion
+
+        return currentVersion != nextVersion &&
+            versionResolver.shouldApplyNewVersion(currentVersion, nextVersion)
     }
 
     override fun tryUpdateSingleDirectly(
-        remoteConfigurationEntry: RemoteConfigurationEntry,
-        content: String,
-    ) {
-        val (remoteVersion, _) = jsonValuesHelper.extractVersionFromValuesString(content)
-        val isUpdated = tryUpdateValuesByRemote(remoteConfigurationEntry, remoteVersion, content)
-        if (isUpdated) {
-            logger.info("Updated ${remoteConfigurationEntry.describe()}.")
-            feedbackService.postFeedbackOnConfiguration(remoteConfigurationEntry.configId!!, remoteVersion)
-        }
-    }
-
-    private fun tryUpdateOrCreateSingle(remoteConfigurationEntry: RemoteConfigurationEntry): Boolean {
-        try {
-            val remoteState = fetchRemote(remoteConfigurationEntry)
-
-            val versionResolver = remoteConfigurationEntry.versionResolveStrategy
-            val remoteVersion = remoteState.version
-            val currentVersion = remoteConfigurationEntry.version
-            if (
-                remoteVersion != currentVersion &&
-                versionResolver.shouldPostNewVersion(remoteVersion, currentVersion)
-            ) {
-                commitToRemote(remoteConfigurationEntry)
-                return false
-            }
-
-            val isUpdated =
-                tryUpdateValuesByRemote(
-                    remoteConfigurationEntry,
-                    remoteVersion,
-                    remoteState.jsonValues,
-                )
-            if (isUpdated) {
-                logger.info("Updated ${remoteConfigurationEntry.describe()}.")
-                feedbackService.postFeedbackOnConfiguration(remoteConfigurationEntry.configId!!, remoteVersion)
-            }
-
-            return false
-        } catch (_: BackendConfigurationException.NotFound) {
-            createNewRemote(remoteConfigurationEntry)
-            backendConfigurationProvider.evictBackendConfigurations()
-            commitToRemote(remoteConfigurationEntry)
-
-            return true
-        } catch (_: BackendConfigurationException.NoState) {
-            commitToRemote(remoteConfigurationEntry)
-
-            return false
-        }
-    }
-
-    @Throws(
-        BackendConfigurationException.NotFound::class,
-        BackendConfigurationException.FetchFailed::class,
-        BackendConfigurationException.NoState::class,
-    )
-    private fun fetchRemote(remoteConfigurationEntry: RemoteConfigurationEntry): BackendState {
-        val nid = rtcms4jProperties.namespaceId
-        val aid = rtcms4jProperties.applicationId
-
-        val backendConfig = findBackendConfigurationOrThrow(remoteConfigurationEntry)
-        val cid = backendConfig.configId
-        if (remoteConfigurationEntry.configId == null) {
-            remoteConfigurationEntry.configId = cid
-        }
-
-        if (backendConfig.version == null) {
-            throw BackendConfigurationException.NoState(
-                message = "RemoteConfigurationEntry has no state.",
-                parent = null,
-            )
-        }
-
-        val backendConfiguration =
-            try {
-                coreApi.getConfiguration(nid, aid, cid)
-            } catch (ex: RestClientResponseException) {
-                throw BackendConfigurationException.FetchFailed(
-                    message = "Backend configuration with id '$cid' not found.",
-                    parent = ex,
-                )
-            }
-
-        return backendConfiguration.toService()
-            ?: throw BackendConfigurationException.NoState(
-                message = "RemoteConfigurationEntry has no state.",
-                parent = null,
-            )
-    }
-
-    private fun tryUpdateValuesByRemote(
-        remoteConfigurationEntry: RemoteConfigurationEntry,
-        remoteVersion: String,
+        remoteConfiguration: RemoteConfigurationEntry,
         jsonValues: String,
     ): Boolean {
-        val versionResolver = remoteConfigurationEntry.versionResolveStrategy
-        val previousVersion = remoteConfigurationEntry.version
-        if (
-            previousVersion == remoteVersion ||
-            !versionResolver.shouldApplyNewVersion(previousVersion, remoteVersion)
-        ) {
-            return false
-        }
+        val (remoteVersion, _) = jsonValuesHelper.extractVersionFromValuesString(jsonValues)
 
-        remoteConfigurationEntry.configurationMutator.updateValues(jsonValues)
-        remoteConfigurationEntry.version = remoteVersion
-        return true
-    }
-
-    @Throws(
-        BackendConfigurationException.NotFound::class,
-        BackendConfigurationException.CommitFailed::class,
-    )
-    private fun commitToRemote(remoteConfigurationEntry: RemoteConfigurationEntry) {
-        val nid = rtcms4jProperties.namespaceId
-        val aid = rtcms4jProperties.applicationId
-
-        val backendConfig = findBackendConfigurationOrThrow(remoteConfigurationEntry)
-        val cid = backendConfig.configId
-        if (remoteConfigurationEntry.configId == null) {
-            remoteConfigurationEntry.configId = cid
-        }
-
-        val commitVersion = remoteConfigurationEntry.version
-        val request =
-            ConfigurationCommitRequest().apply {
-                jsonSchema = remoteConfigurationEntry.configurationMutator.getJsonSchema()
-                jsonValues = remoteConfigurationEntry.configurationMutator.getJsonValuesWithVersion(commitVersion)
-            }
-
-        try {
-            val commit = coreApi.commitConfiguration(nid, aid, backendConfig.configId, request)
-            backendConfig.version = commit.commitVersion
-        } catch (ex: RestClientResponseException) {
-            throw BackendConfigurationException.CommitFailed(
-                message = "Backend configuration with id '$cid' commit failed.",
-                parent = ex,
+        if (shouldApplyNewVersion(remoteConfiguration, remoteVersion)) {
+            remoteConfiguration.localEntry.configurationMutator.updateValues(jsonValues)
+            remoteConfiguration.currentVersion = remoteVersion
+            feedbackService.postFeedbackOnConfiguration(
+                remoteConfiguration.configurationId,
+                remoteConfiguration.currentVersion,
             )
+            logger.info("Updated ${remoteConfiguration.describe()}.")
+
+            return true
         }
-    }
 
-    @Throws(
-        BackendConfigurationException.CreateFailed::class,
-    )
-    private fun createNewRemote(remoteConfigurationEntry: RemoteConfigurationEntry) {
-        val nid = rtcms4jProperties.namespaceId
-        val aid = rtcms4jProperties.applicationId
-
-        val request =
-            ConfigurationDtoCreateRequest().apply {
-                name = remoteConfigurationEntry.configName
-                schemaSourceType = SourceType.SERVICE
-            }
-
-        try {
-            val remote = coreApi.createConfiguration(nid, aid, request)
-
-            val cid = remote.id
-            if (remoteConfigurationEntry.configId == null) {
-                remoteConfigurationEntry.configId = cid
-            }
-        } catch (ex: RestClientResponseException) {
-            throw BackendConfigurationException.CreateFailed(
-                message = "Remote configuration '${remoteConfigurationEntry.configName}' creation failed.",
-                parent = ex,
-            )
-        }
-    }
-
-    private fun findBackendConfigurationOrThrow(remoteConfigurationEntry: RemoteConfigurationEntry): BackendConfigurationEntry {
-        val backendEntries = backendConfigurationProvider.getBackendConfigurations()
-
-        val configId = remoteConfigurationEntry.configId
-        val backendConfig =
-            if (configId != null) {
-                backendEntries.find { it.configId == configId }
-                    ?: throw BackendConfigurationException.NotFound(
-                        message = "Backend configuration with id '$configId' not found.",
-                        parent = null,
-                    )
-            } else {
-                val backendName = remoteConfigurationEntry.configName
-                backendEntries.find { it.configName == backendName }
-                    ?: throw BackendConfigurationException.NotFound(
-                        message = "Backend configuration named '$backendName' not found.",
-                        parent = null,
-                    )
-            }
-
-        return backendConfig
+        logger.info("$remoteConfiguration ignored version: $remoteVersion")
+        return false
     }
 }

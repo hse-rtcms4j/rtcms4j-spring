@@ -9,22 +9,22 @@ open class BackendConfigurationException(
         parent: Throwable? = null,
     ) : BackendConfigurationException(message, parent)
 
+    class NotMatched(
+        message: String,
+        parent: Throwable? = null,
+    ) : BackendConfigurationException(message, parent)
+
+    class CreationFailed(
+        message: String,
+        parent: Throwable? = null,
+    ) : BackendConfigurationException(message, parent)
+
     class FetchFailed(
         message: String,
         parent: Throwable? = null,
     ) : BackendConfigurationException(message, parent)
 
-    class NoState(
-        message: String,
-        parent: Throwable? = null,
-    ) : BackendConfigurationException(message, parent)
-
     class CommitFailed(
-        message: String,
-        parent: Throwable? = null,
-    ) : BackendConfigurationException(message, parent)
-
-    class CreateFailed(
         message: String,
         parent: Throwable? = null,
     ) : BackendConfigurationException(message, parent)

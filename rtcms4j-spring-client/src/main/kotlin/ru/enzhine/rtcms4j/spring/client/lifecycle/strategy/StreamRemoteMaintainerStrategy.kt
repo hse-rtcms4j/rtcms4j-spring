@@ -5,12 +5,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import ru.enzhine.rtcms4j.spring.client.event.ConfigurationVersionEvent
+import ru.enzhine.rtcms4j.spring.client.event.StreamInterruptedEvent
 import ru.enzhine.rtcms4j.spring.client.lifecycle.strategy.StreamRemoteMaintainerStrategy.Companion.REMOTE_MAINTAINER_STRATEGY_STREAM_NAME
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationManager
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationRegistry
-import ru.enzhine.rtcms4j.spring.client.sse.NotificationOperator
-import ru.enzhine.rtcms4j.spring.client.sse.event.ConfigurationVersionEvent
-import ru.enzhine.rtcms4j.spring.client.sse.event.StreamInterruptedEvent
+import ru.enzhine.rtcms4j.spring.client.stream.NotificationOperator
 
 @ComponentScan(basePackageClasses = [NotificationOperator::class])
 @Component
@@ -36,24 +36,23 @@ class StreamRemoteMaintainerStrategy(
 
     override fun maintain() {
         super.maintain()
-
-        if (!remoteConfigurationRegistry.entries().all { it.configId != null }) {
-            throw RuntimeException("All RemoteConfigurations must be matched with remote side.")
-        }
         started = true
     }
 
     @EventListener
     fun onConfigVersion(configurationVersionEvent: ConfigurationVersionEvent) {
         if (!started) {
-            logger.warn("An event appeared before RemoteConfigurations matched with remote.")
+            logger.warn("Ignoring ConfigurationVersionEvent that appeared before first maintain.")
             return
         }
 
         val remoteId = configurationVersionEvent.configurationId
         val matched =
-            remoteConfigurationRegistry.entries().find { it.configId == remoteId }
-                ?: throw RuntimeException("Unknown RemoteConfiguration with id=$remoteId.")
+            remoteConfigurationRegistry.entries().find { it.configurationId == remoteId }
+                ?: run {
+                    logger.info("Ignoring unknown remote-configuration with id=$remoteId.")
+                    return
+                }
 
         val content = configurationVersionEvent.content
         configurationManager.tryUpdateSingleDirectly(matched, content)
@@ -62,7 +61,7 @@ class StreamRemoteMaintainerStrategy(
     @EventListener
     fun onStreamInterrupted(streamInterruptedEvent: StreamInterruptedEvent) {
         if (!started) {
-            logger.warn("An event appeared before RemoteConfigurations matched with remote.")
+            logger.warn("Ignoring StreamInterruptedEvent that appeared before first maintain.")
             return
         }
 

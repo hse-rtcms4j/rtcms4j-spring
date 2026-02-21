@@ -5,13 +5,15 @@ import ru.enzhine.rtcms4j.spring.client.service.exception.BackendConfigurationEx
 
 interface RemoteConfigurationManager {
     @Throws(
-        BackendConfigurationException.FetchFailed::class,
-        BackendConfigurationException.CreateFailed::class,
+        exceptionClasses = [
+            BackendConfigurationException.FetchFailed::class,
+            BackendConfigurationException.CommitFailed::class,
+        ],
     )
-    fun tryUpdate(remoteConfigurationEntries: List<RemoteConfigurationEntry>)
+    fun tryUpdateMultipleAuto(remoteConfigurations: List<RemoteConfigurationEntry>): Int
 
     fun tryUpdateSingleDirectly(
-        remoteConfigurationEntry: RemoteConfigurationEntry,
-        content: String,
-    )
+        remoteConfiguration: RemoteConfigurationEntry,
+        jsonValues: String,
+    ): Boolean
 }

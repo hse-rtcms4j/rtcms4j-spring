@@ -24,12 +24,12 @@ class FeedbackServiceImpl(
     }
 
     override fun postFeedbackOnConfiguration(
-        configId: Long,
+        configurationId: Long,
         version: String,
     ) {
         val nid = rtcms4jProperties.namespaceId
         val aid = rtcms4jProperties.applicationId
-        val cid = configId
+        val cid = configurationId
 
         val request =
             ConfigurationFeedbackRequestDto().apply {

@@ -1,5 +1,6 @@
 package ru.enzhine.rtcms4j.spring.client.lifecycle.strategy
 
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
@@ -23,6 +24,7 @@ class ScheduledRemoteMaintainerStrategy(
         configurationManager,
     ) {
     companion object {
+        private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
         const val REMOTE_MAINTAINER_STRATEGY_SCHEDULED_NAME = "scheduled"
     }
 
@@ -40,8 +42,11 @@ class ScheduledRemoteMaintainerStrategy(
     )
     @Scheduled(cron = $$"${spring.rtcms4j.maintain.$$REMOTE_MAINTAINER_STRATEGY_SCHEDULED_NAME.cron}")
     fun continueMaintaining() {
-        if (started) {
-            super.maintain()
+        if (!started) {
+            logger.warn("Ignoring scheduled maintain invocation that happened before first maintain.")
+            return
         }
+
+        super.maintain()
     }
 }

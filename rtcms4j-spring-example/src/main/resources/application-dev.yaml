@@ -5,14 +5,14 @@ spring:
   rtcms4j:
     enabled: true
     namespace-id: 1
-    application-id: 1
+    application-id: 2
     api:
       core-base-url: http://localhost:8000/core/api/v1
       notify-base-url: http://localhost:8000/notify/api/v1
     token-refresh-offset: 10m
     keycloak:
       server-url: http://localhost:8080
-      client-id: ns1_app1
-      client-secret: gE9krmATYx6QfD2Rzltwf6tXPTXCPDNK
+      client-id: ns1_app2
+      client-secret: o47FZ2ZfRVhCWS7OQUl3I3O6zvAX4g5b
     maintain:
       type: stream

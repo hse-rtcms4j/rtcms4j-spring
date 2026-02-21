@@ -6,14 +6,18 @@ import org.springframework.context.annotation.Configuration
 import ru.enzhine.rtcms4j.core.api.CoreApi
 import ru.enzhine.rtcms4j.notify.api.NotifyApi
 import ru.enzhine.rtcms4j.spring.client.config.props.ApiProperties
+import ru.enzhine.rtcms4j.spring.client.config.props.FeaturesProperties
 import ru.enzhine.rtcms4j.spring.client.config.props.KeycloakProperties
 import ru.enzhine.rtcms4j.spring.client.config.props.Rtcms4jProperties
-import ru.enzhine.rtcms4j.spring.client.service.JwtTokenProvider
+import ru.enzhine.rtcms4j.spring.client.config.props.SseRetryConfig
+import ru.enzhine.rtcms4j.spring.client.service.api.JwtTokenProvider
 
 @EnableConfigurationProperties(
-    ApiProperties::class,
     Rtcms4jProperties::class,
+    FeaturesProperties::class,
+    ApiProperties::class,
     KeycloakProperties::class,
+    SseRetryConfig::class,
 )
 @Configuration
 class Rtcms4jConfig {
@@ -22,7 +26,7 @@ class Rtcms4jConfig {
         coreApiProperties: ApiProperties,
         jwtTokenProvider: JwtTokenProvider,
     ) = CoreApi().apply {
-        apiClient.basePath = coreApiProperties.baseUrl ?: coreApiProperties.coreBaseUrl
+        apiClient.basePath = coreApiProperties.coreBaseUrl
         apiClient.setBearerToken(jwtTokenProvider::getToken)
     }
 
@@ -31,7 +35,7 @@ class Rtcms4jConfig {
         coreApiProperties: ApiProperties,
         jwtTokenProvider: JwtTokenProvider,
     ) = NotifyApi().apply {
-        apiClient.basePath = coreApiProperties.baseUrl ?: coreApiProperties.notifyBaseUrl
+        apiClient.basePath = coreApiProperties.notifyBaseUrl
         apiClient.setBearerToken(jwtTokenProvider::getToken)
     }
 }
