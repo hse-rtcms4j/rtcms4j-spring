@@ -1,16 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.net.URI
-
-fun RepositoryHandler.github(repo: String) = maven {
-    name = "GitHubPackages"
-    url = URI.create("https://maven.pkg.github.com/$repo")
-    credentials {
-        // picks from: .../user/.gradle/gradle.properties
-        username = System.getenv("GITHUB_ACTOR") ?: findProperty("GITHUB_LOGIN") as String?
-        password = System.getenv("GITHUB_TOKEN") ?: findProperty("GITHUB_TOKEN") as String?
-    }
-}
 
 plugins {
     kotlin("jvm") apply false
@@ -19,7 +8,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") apply false
     id("org.openapi.generator") apply false
     id("io.spring.dependency-management")
-    id("maven-publish")
+    id("com.vanniktech.maven.publish")
 }
 
 subprojects {
@@ -30,7 +19,7 @@ subprojects {
         plugin("org.jlleitschuh.gradle.ktlint")
         plugin("org.openapi.generator")
         plugin("org.springframework.boot")
-        plugin("maven-publish")
+        plugin("com.vanniktech.maven.publish")
     }
 
     val groupId: String by project
@@ -51,6 +40,10 @@ subprojects {
             val jsonSchemaValidatorVersion: String by project
             dependency("com.networknt:json-schema-validator:$jsonSchemaValidatorVersion")
 
+            val jsonSchemaGeneratorVersion: String by project
+            dependency("com.github.victools:jsonschema-generator:$jsonSchemaGeneratorVersion")
+            dependency("com.github.victools:jsonschema-module-jackson:$jsonSchemaGeneratorVersion")
+
             val cucumberVersion: String by project
             dependency("io.cucumber:cucumber-jvm:$cucumberVersion")
             dependency("io.cucumber:cucumber-spring:$cucumberVersion")
@@ -64,26 +57,15 @@ subprojects {
 
             val rtcms4jNotify: String by project
             dependency("ru.enzhine:rtcms4j-notify-api:$rtcms4jNotify")
+
+            val jacksonJsr310: String by project
+            dependency("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonJsr310")
         }
     }
 
     repositories {
         mavenLocal()
         mavenCentral()
-    }
-
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                this.groupId = groupId
-                this.artifactId = project.name
-                this.version = versionId
-                from(components["java"])
-            }
-        }
-        repositories {
-            github("hse-rtcms4j/rtcms4j-spring")
-        }
     }
 }
 
