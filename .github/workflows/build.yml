@@ -34,9 +34,12 @@ jobs:
         GITHUB_ACTOR: ${{ github.actor }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#    - name: Publish to GitHub Packages
-#      if: github.ref == 'refs/heads/main'
-#      run: ./gradlew publish
-#      env:
-#        GITHUB_ACTOR: ${{ github.actor }}
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish to Maven Central
+      if: github.ref == 'refs/heads/main'
+      run: ./gradlew publishToMavenCentral --no-configuration-cache
+      env:
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}

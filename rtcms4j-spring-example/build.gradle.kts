@@ -20,8 +20,4 @@ tasks {
     jar {
         enabled = false
     }
-
-    withType<PublishToMavenRepository> {
-        enabled = false
-    }
 }
