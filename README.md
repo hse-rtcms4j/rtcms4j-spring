@@ -9,7 +9,7 @@ Library for integration with [RTCMS4J](https://github.com/hse-rtcms4j/).
 To integrate RTCMS4J into your Spring Boot microservice application, you need to add the `rtcms4j-spring-client-starter`
 dependency to your `pom.xml` or `build.gradle` file.
 
-The current relevant version is `0.1.3`.
+The current relevant version is `0.1.4`.
 
 ### Adding Application Properties
 
