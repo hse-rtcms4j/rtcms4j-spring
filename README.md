@@ -73,7 +73,7 @@ By default, class name is used to identify your remote configuration DTO.
 | Field                    | Description                                                                                            | Default  |
 |--------------------------|--------------------------------------------------------------------------------------------------------|----------|
 | `version`                | Current application remote configuration version. Must be set.                                         |          |
-| `aliasName`              | However you can override it with alias.                                                                |          |
+| `aliasName`              | In case you do not want to identify your remote configuration DTO by class name you can provide alias. |          |
 | `remoteId`               | In case you do not want to identify your remote configuration DTO by name you can provide direct id.   |          |
 | `versionResolveStrategy` | Configuration version resolve strategy for `version` field. Can be set any context-available strategy. | `semver` |
 
