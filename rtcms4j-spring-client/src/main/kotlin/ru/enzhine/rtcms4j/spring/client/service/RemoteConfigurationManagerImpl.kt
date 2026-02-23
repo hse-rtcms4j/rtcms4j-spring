@@ -113,7 +113,7 @@ class RemoteConfigurationManagerImpl(
             return true
         }
 
-        logger.info("$remoteConfig ignored version: $nextVersion")
+        logger.info("${remoteConfig.describe()} ignored version: $nextVersion")
         return false
     }
 
@@ -158,7 +158,7 @@ class RemoteConfigurationManagerImpl(
             return true
         }
 
-        logger.info("$remoteConfiguration ignored version: $remoteVersion")
+        logger.info("${remoteConfiguration.describe()} ignored version: $remoteVersion")
         return false
     }
 }

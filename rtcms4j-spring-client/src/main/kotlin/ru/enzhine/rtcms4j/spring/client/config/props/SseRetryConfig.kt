@@ -2,7 +2,7 @@ package ru.enzhine.rtcms4j.spring.client.config.props
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
-@ConfigurationProperties(prefix = "spring.rtcms4j.sse.retry")
+@ConfigurationProperties(prefix = "spring.rtcms4j.maintain.stream")
 data class SseRetryConfig(
     val normalThreshold: Int = 10,
     val normalWindowSeconds: Long = 10,
