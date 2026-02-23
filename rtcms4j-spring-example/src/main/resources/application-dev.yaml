@@ -3,16 +3,21 @@ server:
 
 spring:
   rtcms4j:
+    # whether to enable library
     enabled: true
+    # target RTCMS4J namespace id
     namespace-id: 1
+    # target RTCMS4J application id associated with your project
     application-id: 2
     api:
+      # RTCMS4J gateway address for core api
       core-base-url: http://localhost:8000/core/api/v1
+      # RTCMS4J gateway address for notify api
       notify-base-url: http://localhost:8000/notify/api/v1
-    token-refresh-offset: 10m
     keycloak:
+      # Keycloak address employed by RTCMS4J
       server-url: http://localhost:8080
+      # target RTCMS4J application client id associated with your project
       client-id: ns1_app2
+      # target RTCMS4J application client secret associated with your project
       client-secret: o47FZ2ZfRVhCWS7OQUl3I3O6zvAX4g5b
-    maintain:
-      type: stream

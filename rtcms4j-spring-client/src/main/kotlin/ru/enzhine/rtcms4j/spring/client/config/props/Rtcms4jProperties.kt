@@ -9,7 +9,7 @@ data class Rtcms4jProperties(
     val enabled: Boolean = true,
     val namespaceId: Long,
     val applicationId: Long,
-    val tokenRefreshOffset: Duration,
+    val tokenRefreshOffset: Duration = Duration.ofSeconds(30),
     val clientName: String = UUID.randomUUID().toString(),
     val pageSize: Long = 20,
 )
