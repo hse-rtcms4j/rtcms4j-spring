@@ -1,6 +1,7 @@
 package ru.enzhine.rtcms4j.spring.client.stream
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.SmartLifecycle
 import org.springframework.stereotype.Component
@@ -9,12 +10,14 @@ import ru.enzhine.rtcms4j.spring.client.config.props.SseRetryConfig
 import ru.enzhine.rtcms4j.spring.client.event.ConfigurationVersionEvent
 import ru.enzhine.rtcms4j.spring.client.event.SecretRotationEvent
 import ru.enzhine.rtcms4j.spring.client.event.StreamInterruptedEvent
+import ru.enzhine.rtcms4j.spring.client.lifecycle.strategy.StreamRemoteMaintainerStrategy
 import ru.enzhine.rtcms4j.spring.client.stream.api.NotificationClient
 import ru.enzhine.rtcms4j.spring.client.stream.retry.SseRetryManager
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Component
+@ConditionalOnBean(StreamRemoteMaintainerStrategy::class)
 class NotificationOperator(
     private val notificationClient: NotificationClient,
     private val applicationEventPublisher: ApplicationEventPublisher,
