@@ -11,5 +11,5 @@ data class Rtcms4jProperties(
     val applicationId: Long,
     val tokenRefreshOffset: Duration = Duration.ofSeconds(30),
     val clientName: String = UUID.randomUUID().toString(),
-    val pageSize: Long = 20,
+    val pageSize: Int = 20,
 )

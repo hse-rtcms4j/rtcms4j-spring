@@ -2,7 +2,6 @@ package ru.enzhine.rtcms4j.spring.client.lifecycle.strategy
 
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import ru.enzhine.rtcms4j.spring.client.event.ConfigurationVersionEvent
@@ -10,9 +9,7 @@ import ru.enzhine.rtcms4j.spring.client.event.StreamInterruptedEvent
 import ru.enzhine.rtcms4j.spring.client.lifecycle.strategy.StreamRemoteMaintainerStrategy.Companion.REMOTE_MAINTAINER_STRATEGY_STREAM_NAME
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationManager
 import ru.enzhine.rtcms4j.spring.client.service.RemoteConfigurationRegistry
-import ru.enzhine.rtcms4j.spring.client.stream.NotificationOperator
 
-@ComponentScan(basePackageClasses = [NotificationOperator::class])
 @Component
 @ConditionalOnProperty(
     prefix = "spring.rtcms4j.maintain",

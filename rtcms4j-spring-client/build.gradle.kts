@@ -34,9 +34,9 @@ dependencies {
     api("com.github.victools:jsonschema-generator")
     api("com.github.victools:jsonschema-module-jackson")
 
-    testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
+    testImplementation(kotlin("test"))
 }
 
 val projectBuildDir = layout.buildDirectory.get()

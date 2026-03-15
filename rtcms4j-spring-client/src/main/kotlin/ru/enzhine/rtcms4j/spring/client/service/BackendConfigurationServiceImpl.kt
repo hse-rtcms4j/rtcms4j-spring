@@ -9,7 +9,6 @@ import ru.enzhine.rtcms4j.core.api.dto.ConfigurationCommitDetailedDto
 import ru.enzhine.rtcms4j.core.api.dto.ConfigurationCommitRequest
 import ru.enzhine.rtcms4j.core.api.dto.ConfigurationDetailedDto
 import ru.enzhine.rtcms4j.core.api.dto.ConfigurationDtoCreateRequest
-import ru.enzhine.rtcms4j.core.api.dto.Pageable
 import ru.enzhine.rtcms4j.core.api.dto.SourceType
 import ru.enzhine.rtcms4j.spring.client.config.props.Rtcms4jProperties
 import ru.enzhine.rtcms4j.spring.client.discovery.mutator.ConfigurationMutator
@@ -31,18 +30,12 @@ class BackendConfigurationServiceImpl(
         val aid = rtcms4jProperties.applicationId
 
         val pageSize = rtcms4jProperties.pageSize
-        var currentPage = 0L
+        var currentPage = 0
         var totalPages: Long
         do {
-            val pageable =
-                Pageable().apply {
-                    this.page = currentPage
-                    this.size = pageSize
-                }
-
             val pagedModel =
                 try {
-                    coreApi.findAllConfigurations(nid, aid, null, pageable)!!
+                    coreApi.findAllConfigurations(nid, aid, null, currentPage, pageSize)!!
                 } catch (ex: RestClientResponseException) {
                     throw BackendConfigurationException.FetchFailed(
                         message = "No backend configurations accessible.",
