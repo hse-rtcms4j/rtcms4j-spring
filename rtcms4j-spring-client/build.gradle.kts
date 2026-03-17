@@ -42,6 +42,7 @@ dependencies {
 val projectBuildDir = layout.buildDirectory.get()
 
 tasks.register("generate-core-api", GenerateTask::class) {
+    enabled = true
     // DOCS: https://openapi-generator.tech/docs/generators/java/
     generatorName = "java"
 
@@ -72,6 +73,7 @@ tasks.register("generate-core-api", GenerateTask::class) {
 }
 
 tasks.register("generate-notify-api", GenerateTask::class) {
+    enabled = true
     // DOCS: https://openapi-generator.tech/docs/generators/java/
     generatorName = "java"
 

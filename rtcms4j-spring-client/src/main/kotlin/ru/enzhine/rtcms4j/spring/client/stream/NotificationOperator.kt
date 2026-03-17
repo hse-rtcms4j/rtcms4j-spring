@@ -85,6 +85,8 @@ class NotificationOperator(
 
     private fun onNotification(notification: NotificationEventDto) {
         when {
+            notification.isHeartbeat -> Unit
+
             notification.configurationUpdateEvent != null -> {
                 val event = notification.configurationUpdateEvent
 
@@ -131,7 +133,7 @@ class NotificationOperator(
         val attempt = sseRetryManager.recordRetryAttempt()
 
         logger.info(
-            "Retry attempt #{attempt.attemptNumber}. Current state: ${attempt.state}. " +
+            "Retry attempt ${attempt.attemptNumber}. Current state: ${attempt.state}. " +
                 "Waiting ${attempt.backoffMs} ms before next reconnection attempt.",
         )
 

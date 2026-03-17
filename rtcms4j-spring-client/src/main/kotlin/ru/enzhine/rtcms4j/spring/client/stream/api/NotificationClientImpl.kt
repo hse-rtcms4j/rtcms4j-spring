@@ -76,8 +76,7 @@ class NotificationClientImpl(
                 try {
                     while ((reader.readLine().also { line = it }) != null) {
                         if (line.isNotEmpty()) {
-                            parseNotification(line)
-                                ?.let { onNotification(it) }
+                            onNotification(parseNotification(line))
                         }
                     }
                 } catch (ex: Throwable) {
@@ -91,15 +90,10 @@ class NotificationClientImpl(
         onError(ex)
     }
 
-    private fun parseNotification(sseMessage: String): NotificationEventDto? {
+    private fun parseNotification(sseMessage: String): NotificationEventDto {
         val knownPrefix = "data:"
         if (sseMessage.startsWith(knownPrefix)) {
             val content = sseMessage.substring(knownPrefix.length)
-
-            if (content == "heartbeat") {
-                return null
-            }
-
             return objectMapper.readValue(content, NotificationEventDto::class.java)
         } else {
             throw RuntimeException("Unknown message format: $sseMessage")

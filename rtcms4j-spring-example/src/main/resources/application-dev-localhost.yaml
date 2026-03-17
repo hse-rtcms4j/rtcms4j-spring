@@ -1,0 +1,23 @@
+server:
+  port: 8079
+
+spring:
+  rtcms4j:
+    # whether to enable library
+    enabled: true
+    # target RTCMS4J namespace id
+    namespace-id: 1
+    # target RTCMS4J application id associated with your project
+    application-id: 1
+    api:
+      # RTCMS4J gateway address for core api
+      core-base-url: http://localhost:8081/api/v1
+      # RTCMS4J gateway address for notify api
+      notify-base-url: http://localhost:8082/api/v1
+    keycloak:
+      # Keycloak address employed by RTCMS4J
+      server-url: http://localhost:8080
+      # target RTCMS4J application client id associated with your project
+      client-id: ns1_app1
+      # target RTCMS4J application client secret associated with your project
+      client-secret: E2EOwKsGYeB6O9IHcxuwD2bnYSa8thBZ

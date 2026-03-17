@@ -27,5 +27,6 @@ open class BackendConfigurationException(
     class CommitFailed(
         message: String,
         parent: Throwable? = null,
+        val alreadyPresent: Boolean,
     ) : BackendConfigurationException(message, parent)
 }

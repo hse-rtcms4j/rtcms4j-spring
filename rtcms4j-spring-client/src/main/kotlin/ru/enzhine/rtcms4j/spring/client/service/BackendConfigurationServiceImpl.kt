@@ -2,6 +2,7 @@ package ru.enzhine.rtcms4j.spring.client.service
 
 import org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE
 import org.springframework.context.annotation.Role
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClientResponseException
 import ru.enzhine.rtcms4j.core.api.CoreApi
@@ -105,9 +106,11 @@ class BackendConfigurationServiceImpl(
 
             coreApi.commitConfiguration(nid, aid, configurationId, request)
         } catch (ex: RestClientResponseException) {
+            val alreadyPresent = ex.statusCode == HttpStatus.CONFLICT
             throw BackendConfigurationException.CommitFailed(
                 message = "Remote-configuration with id '$configurationId' commit failed.",
                 parent = ex,
+                alreadyPresent = alreadyPresent,
             )
         }
 }
