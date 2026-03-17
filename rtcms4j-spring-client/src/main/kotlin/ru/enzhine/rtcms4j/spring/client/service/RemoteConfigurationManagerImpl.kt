@@ -41,42 +41,63 @@ class RemoteConfigurationManagerImpl(
                         )
                     }
 
-            try {
-                if (updateConfiguration(remoteConfig, backendConfig)) {
-                    updatedCount++
-                }
-            } catch (ex: RemoteConfigurationVersionException) {
-                if (featuresProperties.skipConfigurationOnVersionFailure) {
-                    logger.warn("${remoteConfig.describe()} version resolve failed during update.", ex)
-                } else {
-                    throw ex
-                }
-            } catch (ex: BackendConfigurationException.CommitFailed) {
-                if (featuresProperties.skipConfigurationOnCommitFailure) {
-                    logger.warn("${remoteConfig.describe()} new version commit failed during update.", ex)
-                } else {
-                    throw ex
-                }
-            } catch (ex: BackendConfigurationException.FetchFailed) {
-                if (featuresProperties.skipConfigurationOnFetchFailure) {
-                    logger.warn("${remoteConfig.describe()} remote version fetch failed during update.", ex)
-                } else {
-                    throw ex
-                }
+            if (tryUpdateSingleAuto(remoteConfig, backendConfig)) {
+                updatedCount++
             }
         }
 
         return updatedCount
     }
 
+    private fun tryUpdateSingleAuto(
+        remoteConfig: RemoteConfigurationEntry,
+        backendConfig: BackendConfigurationEntry,
+    ): Boolean {
+        try {
+            // first attempt for update, for general purpose
+            try {
+                logger.debug("First attempt updating ${remoteConfig.describe()}.")
+                return updateConfiguration(remoteConfig, backendConfig, true)
+            } catch (ex: BackendConfigurationException.CommitFailed) {
+                if (!ex.alreadyPresent) {
+                    throw ex
+                }
+            }
+            logger.debug("Second attempt updating ${remoteConfig.describe()} without posting.")
+            // second attempt for update, for compatibility with old versions
+            return updateConfiguration(remoteConfig, backendConfig, false)
+        } catch (ex: RemoteConfigurationVersionException) {
+            if (featuresProperties.skipConfigurationOnVersionFailure) {
+                logger.warn("${remoteConfig.describe()} version resolve failed during update.", ex)
+            } else {
+                throw ex
+            }
+        } catch (ex: BackendConfigurationException.CommitFailed) {
+            if (featuresProperties.skipConfigurationOnCommitFailure) {
+                logger.warn("${remoteConfig.describe()} new version commit failed during update.", ex)
+            } else {
+                throw ex
+            }
+        } catch (ex: BackendConfigurationException.FetchFailed) {
+            if (featuresProperties.skipConfigurationOnFetchFailure) {
+                logger.warn("${remoteConfig.describe()} remote version fetch failed during update.", ex)
+            } else {
+                throw ex
+            }
+        }
+
+        return false
+    }
+
     private fun updateConfiguration(
         remoteConfig: RemoteConfigurationEntry,
         backendConfig: BackendConfigurationEntry,
+        postNew: Boolean,
     ): Boolean {
         val configurationId = remoteConfig.configurationId
         val configurationMutator = remoteConfig.localEntry.configurationMutator
 
-        if (shouldPostNewVersion(remoteConfig, backendConfig)) {
+        if (postNew && shouldPostNewVersion(remoteConfig, backendConfig)) {
             backendConfigurationService.commitToRemote(
                 configurationId,
                 configurationMutator,

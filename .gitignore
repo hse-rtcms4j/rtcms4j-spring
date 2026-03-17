@@ -45,3 +45,4 @@ bin/
 ### Custom ###
 .kotlin
 .gigaide
+**/application-prod.yaml
