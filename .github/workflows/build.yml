@@ -34,8 +34,20 @@ jobs:
         GITHUB_ACTOR: ${{ github.actor }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Publish to Maven Central
+    - name: Check if publish should be skipped
+      id: check-publish
       if: github.ref == 'refs/heads/main'
+      run: |
+        SKIP_PUBLISH=false
+        if [[ "${{ github.event.head_commit.message }}" == *"[skip publish]"* ]] || \
+           [[ "${{ github.event.head_commit.message }}" == *"[skip ci]"* ]]; then
+          SKIP_PUBLISH=true
+          echo "Skipping publish due to commit message marker"
+        fi
+        echo "skip_publish=$SKIP_PUBLISH" >> $GITHUB_OUTPUT
+
+    - name: Publish to Maven Central
+      if: github.ref == 'refs/heads/main' && steps.check-publish.outputs.skip_publish == 'false'
       run: ./gradlew publishToMavenCentral --no-configuration-cache
       env:
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
