@@ -1,6 +1,8 @@
 package ru.enzhine.rtcms4j.spring.client.stream
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.actuate.health.Health
+import org.springframework.boot.actuate.health.HealthIndicator
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.SmartLifecycle
@@ -22,7 +24,8 @@ class NotificationOperator(
     private val notificationClient: NotificationClient,
     private val applicationEventPublisher: ApplicationEventPublisher,
     sseRetryConfig: SseRetryConfig,
-) : SmartLifecycle {
+) : SmartLifecycle,
+    HealthIndicator {
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
     }
@@ -43,8 +46,6 @@ class NotificationOperator(
 
             try {
                 initializeConnection()
-
-                isRunning.set(true)
             } catch (ex: Throwable) {
                 logger.error("RTCMS4J notifications connection failed.", ex)
             }
@@ -54,10 +55,9 @@ class NotificationOperator(
 
     override fun stop() =
         if (isInitialized.compareAndSet(true, false)) {
-            logger.info("Disabling RTCMS4J notifications connection...")
             closeConnection()
-            sseRetryManager.reset()
             isRunning.set(false)
+            logger.info("RTCMS4J notifications connection disabled.")
         } else {
             Unit
         }
@@ -76,14 +76,15 @@ class NotificationOperator(
                         onError = this::onError,
                     )
                 }
+        isRunning.set(true)
     }
 
     private fun interrupter(inputStream: InputStream) {
         this.connection = inputStream
-        sseRetryManager.reset()
     }
 
     private fun onNotification(notification: NotificationEventDto) {
+        sseRetryManager.reset()
         when {
             notification.isHeartbeat -> Unit
 
@@ -100,12 +101,9 @@ class NotificationOperator(
 
             notification.passwordRotationEvent != null -> {
                 val event = notification.passwordRotationEvent
-
-                applicationEventPublisher.publishEvent(
-                    SecretRotationEvent(
-                        newSecret = event.newPassword,
-                    ),
-                )
+                event.newPassword?.let {
+                    applicationEventPublisher.publishEvent(SecretRotationEvent(it))
+                }
             }
 
             else -> {
@@ -116,9 +114,14 @@ class NotificationOperator(
 
     private fun onError(throwable: Throwable) {
         if (isInitialized.get()) {
+            isRunning.set(false)
             logger.error("Notification SSE connection was interrupted.", throwable)
             closeConnection()
-            applicationEventPublisher.publishEvent(StreamInterruptedEvent())
+            try {
+                applicationEventPublisher.publishEvent(StreamInterruptedEvent())
+            } catch (throwable: Throwable) {
+                logger.error("An error occurred during interruption event publishing.", throwable)
+            }
 
             if (sseRetryManager.shouldAttemptRetry()) {
                 scheduleRetry()
@@ -133,7 +136,7 @@ class NotificationOperator(
         val attempt = sseRetryManager.recordRetryAttempt()
 
         logger.info(
-            "Retry attempt ${attempt.attemptNumber}. Current state: ${attempt.state}. " +
+            "Connection retry attempt ${attempt.attemptNumber}. " +
                 "Waiting ${attempt.backoffMs} ms before next reconnection attempt.",
         )
 
@@ -157,5 +160,20 @@ class NotificationOperator(
             con?.close()
             Unit
         } catch (ignored: Throwable) {
+        }
+
+    override fun health(): Health =
+        if (isRunning()) {
+            Health
+                .up()
+                .withDetail("module", "NotificationOperator")
+                .withDetail("status", "running")
+                .build()
+        } else {
+            Health
+                .down()
+                .withDetail("module", "NotificationOperator")
+                .withDetail("status", "stopped")
+                .build()
         }
 }

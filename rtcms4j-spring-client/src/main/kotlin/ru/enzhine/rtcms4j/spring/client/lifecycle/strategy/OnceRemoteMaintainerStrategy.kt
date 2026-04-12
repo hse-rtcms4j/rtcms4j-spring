@@ -25,6 +25,6 @@ open class OnceRemoteMaintainerStrategy(
     override fun maintain() {
         val remoteConfigurations = remoteConfigurationRegistry.entries()
         val updatedCount = configurationManager.tryUpdateMultipleAuto(remoteConfigurations)
-        logger.info("[$updatedCount/${remoteConfigurations.size}] remote-configurations synchronised.")
+        logger.info("[$updatedCount/${remoteConfigurations.size}] remote-configurations updated.")
     }
 }

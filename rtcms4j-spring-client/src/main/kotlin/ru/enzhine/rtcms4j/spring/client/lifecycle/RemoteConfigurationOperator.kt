@@ -1,6 +1,8 @@
 package ru.enzhine.rtcms4j.spring.client.lifecycle
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.actuate.health.Health
+import org.springframework.boot.actuate.health.HealthIndicator
 import org.springframework.context.SmartLifecycle
 import org.springframework.stereotype.Component
 import ru.enzhine.rtcms4j.spring.client.lifecycle.strategy.RemoteMaintainerStrategy
@@ -9,7 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Component
 class RemoteConfigurationOperator(
     private val remoteMaintainerStrategy: RemoteMaintainerStrategy,
-) : SmartLifecycle {
+) : SmartLifecycle,
+    HealthIndicator {
     companion object {
         private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
     }
@@ -48,6 +51,22 @@ class RemoteConfigurationOperator(
     override fun isRunning(): Boolean = isRunning.get()
 
     private fun initialize() {
+        logger.info("Using strategy: ${remoteMaintainerStrategy::class.java.simpleName}.")
         remoteMaintainerStrategy.maintain()
     }
+
+    override fun health(): Health =
+        if (isRunning()) {
+            Health
+                .up()
+                .withDetail("module", "RemoteConfigurationOperator")
+                .withDetail("status", "running")
+                .build()
+        } else {
+            Health
+                .down()
+                .withDetail("module", "RemoteConfigurationOperator")
+                .withDetail("status", "stopped")
+                .build()
+        }
 }

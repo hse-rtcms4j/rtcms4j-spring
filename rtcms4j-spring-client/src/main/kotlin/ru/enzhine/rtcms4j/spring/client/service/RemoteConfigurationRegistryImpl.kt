@@ -30,6 +30,15 @@ class RemoteConfigurationRegistryImpl(
                 val backendFound =
                     findBackendConfigurationOrThrow(local, backendConfigurations)
 
+                beanEntries
+                    .find { it.configurationId == backendFound.configurationId }
+                    ?.let {
+                        throw RuntimeException(
+                            "$local is associated with remote-configuration id " +
+                                "${backendFound.configurationId}, while it is already claimed by $it.",
+                        )
+                    }
+
                 beanEntries.add(
                     RemoteConfigurationEntry(
                         localEntry = local,
