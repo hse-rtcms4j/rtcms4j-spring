@@ -60,12 +60,12 @@ class SemanticVersionResolveStrategy(
             val new = retrieveSemVer(newRemoteVersion)
             val prev = retrieveSemVer(currentVersion)
 
-            if (semanticVersionResolveProperties.applyDifferentMajor && new.major != prev.major) {
-                true
-            } else if (semanticVersionResolveProperties.applyDifferentMinor && new.minor != prev.minor) {
-                true
-            } else if (semanticVersionResolveProperties.applyDifferentFix && new.fix != prev.fix) {
-                true
+            if (new.major != prev.major) {
+                semanticVersionResolveProperties.applyDifferentMajor
+            } else if (new.minor != prev.minor) {
+                semanticVersionResolveProperties.applyDifferentMinor
+            } else if (new.fix != prev.fix) {
+                semanticVersionResolveProperties.applyDifferentFix
             } else {
                 false
             }

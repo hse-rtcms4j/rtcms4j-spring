@@ -24,7 +24,7 @@ class LocalConfigurationRegistryImpl : LocalConfigurationRegistry {
             val registeredByName = beanEntries.find { it.configId == null && it.configurationName == entry.configurationName }
             if (registeredByName != null) {
                 throw RemoteConfigurationBeanRegistrationException(
-                    "Unable to register ${entry.beanName}," +
+                    "Unable to register ${entry.beanName}, " +
                         "because ${registeredByName.beanName} already claimed ${registeredByName.configurationName}.",
                 )
             }

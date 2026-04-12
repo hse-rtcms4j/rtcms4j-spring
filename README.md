@@ -9,7 +9,7 @@ Library for integration with [RTCMS4J](https://github.com/hse-rtcms4j/).
 To integrate RTCMS4J into your Spring Boot microservice application, you need to add the `rtcms4j-spring-client-starter`
 dependency to your `pom.xml` or `build.gradle` file.
 
-The current relevant version is `0.1.6`.
+The current relevant version is `1.0.0`.
 
 ### Adding Application Properties
 
@@ -61,7 +61,7 @@ You can also use Jackson `@JsonPropertyDescription` annotation to add comments f
 
 ### Example
 
-You can check out example project `rtcms4j-spring-example` in this repository. 
+You can check out example project `rtcms4j-spring-example` in this repository.
 
 ## Details
 
@@ -80,12 +80,14 @@ By default, class name is used to identify your remote configuration DTO.
 It is recommended to define MUTABLE (provide setters for properties) DTO classes for remote configuration.
 Such way new values will be filled directly, enabling best performance.
 
-However, IMMUTABLE (constructor-only properties) DTO classes are also supported. Such classes must not be final or contain final getters.
+However, IMMUTABLE (constructor-only properties) DTO classes are also supported. Such classes must not be final or
+contain final getters.
 This library will create proxy for such beans.
 
 ### @RemoteConfiguration limitations
 
-Only plain DTO classes with primitive types are supported. Such types are: numeric, integers, string, boolean, and enums, or arrays of them.
+Only plain DTO classes with primitive types are supported. Such types are: numeric, integers, string, boolean, and
+enums, or arrays of them.
 
 ### Configuration relevance maintain strategies
 
@@ -131,14 +133,10 @@ However, user might add their own version resolve strategy by implementing
 | `spring.rtcms4j.keycloak.realm`                                     | Keycloak realm used by RTCMS4J.                                                                   | `rtcms4j`                                                            |
 | `spring.rtcms4j.maintain.type`                                      | Configuration relevance maintain strategy.                                                        | `stream`                                                             |
 | `spring.rtcms4j.maintain.scheduled.cron`                            | Spring cron expression for scheduling synchronization. Required for `scheduled` maintain strategy |
-| `spring.rtcms4j.maintain.stream.normal-threshold`                   | Threshold for normal stream retries.                                                              | `10`                                                                 |
-| `spring.rtcms4j.maintain.stream.normal-window-seconds`              | Window duration for normal stream retries (in seconds).                                           | `10`                                                                 |
-| `spring.rtcms4j.maintain.stream.normal-backoff-base-ms`             | Base backoff time for normal stream retries (in ms).                                              | `1000`                                                               |
-| `spring.rtcms4j.maintain.stream.throttled-threshold`                | Threshold for throttled stream retries.                                                           | `5`                                                                  |
-| `spring.rtcms4j.maintain.stream.throttled-window-seconds`           | Window duration for throttled stream retries (in seconds).                                        | `60`                                                                 |
-| `spring.rtcms4j.maintain.stream.throttled-backoff-base-ms`          | Base backoff time for throttled stream retries (in ms).                                           | `5000`                                                               |
-| `spring.rtcms4j.maintain.stream.max-backoff-ms`                     | Maximum backoff time for retries (in ms).                                                         | `300000`                                                             |
+| `spring.rtcms4j.maintain.stream.threshold`                          | Threshold for stream retries.                                                                     | `10`                                                                 |
+| `spring.rtcms4j.maintain.stream.backoff-base-ms`                    | Base backoff time for stream retries (in ms).                                                     | `1000`                                                               |
 | `spring.rtcms4j.maintain.stream.min-backoff-ms`                     | Minimum backoff time for retries (in ms).                                                         | `100`                                                                |
+| `spring.rtcms4j.maintain.stream.max-backoff-ms`                     | Maximum backoff time for retries (in ms).                                                         | `30000`                                                              |
 | `spring.rtcms4j.features.ignore-configuration-on-match-failure`     | Whether to ignore configuration on match failure.                                                 | `false`                                                              |
 | `spring.rtcms4j.features.ignore-configuration-on-creation-failure`  | Whether to ignore configuration on creation failure.                                              | `false`                                                              |
 | `spring.rtcms4j.features.skip-configuration-on-remote-lost-failure` | Whether to skip configuration on remote lost failure.                                             | `true`                                                               |

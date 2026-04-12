@@ -2,8 +2,7 @@ package ru.enzhine.rtcms4j.spring.client.stream.retry
 
 import org.slf4j.LoggerFactory
 import ru.enzhine.rtcms4j.spring.client.config.props.SseRetryConfig
-import java.time.Instant
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
 
 class SseRetryManager(
@@ -13,101 +12,51 @@ class SseRetryManager(
         private val logger = LoggerFactory.getLogger(this::class.java)
     }
 
-    enum class RetryState {
-        NORMAL,
-        THROTTLED,
-    }
-
-    private val retryTimestamps = mutableListOf<Instant>()
-    private val retryState = AtomicReference(RetryState.NORMAL)
-    private var lastRetryTime = Instant.now()
+    private val attemptCounter = AtomicInteger(0)
+    private val maxAttempts = sseRetryConfig.threshold
 
     fun shouldAttemptRetry(): Boolean {
-        synchronized(retryTimestamps) {
-            val now = Instant.now()
-
-            retryTimestamps.removeAll { timestamp ->
-                val cutoff =
-                    when (retryState.get()) {
-                        RetryState.NORMAL -> now.minusSeconds(sseRetryConfig.normalWindowSeconds)
-                        RetryState.THROTTLED -> now.minusSeconds(sseRetryConfig.throttledWindowSeconds)
-                    }
-                timestamp.isBefore(cutoff)
-            }
-
-            val threshold =
-                when (retryState.get()) {
-                    RetryState.NORMAL -> sseRetryConfig.normalThreshold
-                    RetryState.THROTTLED -> sseRetryConfig.throttledThreshold
-                }
-
-            val currentRetryCount = retryTimestamps.size
-
-            return if (currentRetryCount < threshold) {
-                true
-            } else {
-                if (retryState.get() == RetryState.NORMAL) {
-                    logger.warn(
-                        "Retry threshold exceeded ({} in {} seconds). Switching to throttled mode.",
-                        currentRetryCount,
-                        sseRetryConfig.normalWindowSeconds,
-                    )
-                    retryState.set(RetryState.THROTTLED)
-                }
-                false
-            }
-        }
+        val currentCount = attemptCounter.get()
+        return currentCount < maxAttempts
     }
 
     fun recordRetryAttempt(): RetryAttempt {
-        synchronized(retryTimestamps) {
-            val now = Instant.now()
-            retryTimestamps.add(now)
-            val currentRetryCount = retryTimestamps.size
+        val attemptNumber = attemptCounter.incrementAndGet()
 
-            val backoffMs = calculateBackoff(currentRetryCount)
-            lastRetryTime = now
-
-            return RetryAttempt(
-                attemptNumber = currentRetryCount,
-                backoffMs = backoffMs,
-                state = retryState.get(),
-            )
+        if (attemptNumber > maxAttempts) {
+            logger.warn("Retry limit exceeded (max: {}). Retries stopped until reset.", maxAttempts)
         }
+
+        val backoffMs = calculateBackoff(attemptNumber)
+
+        return RetryAttempt(
+            attemptNumber = attemptNumber,
+            backoffMs = backoffMs,
+        )
     }
 
-    private fun calculateBackoff(retryNumber: Int): Long {
-        val baseMs =
-            when (retryState.get()) {
-                RetryState.NORMAL -> sseRetryConfig.normalBackoffBaseMs
-                RetryState.THROTTLED -> sseRetryConfig.throttledBackoffBaseMs
-            }
+    private fun calculateBackoff(attemptNumber: Int): Long {
+        val baseMs = sseRetryConfig.backoffBaseMs
+        val maxBackoff = sseRetryConfig.maxBackoffMs
+        val minBackoff = sseRetryConfig.minBackoffMs
 
-        // Exponential backoff with jitter
-        val exponentialBackoff = baseMs * Math.pow(2.0, (retryNumber - 1).toDouble())
+        val exponentialMs = baseMs * (1L shl (attemptNumber - 1))
+        val cappedMs = min(exponentialMs, maxBackoff)
 
-        // Cap at max backoff
-        val cappedBackoff = min(exponentialBackoff.toLong(), sseRetryConfig.maxBackoffMs)
+        val jitter = (cappedMs * 0.1 * (Math.random() - 0.5)).toLong()
 
-        // Add jitter (±10%)
-        val jitter = (cappedBackoff * 0.1 * (Math.random() - 0.5)).toLong()
-
-        return (cappedBackoff + jitter).coerceAtLeast(sseRetryConfig.minBackoffMs)
+        return (cappedMs + jitter).coerceAtLeast(minBackoff)
     }
 
     fun reset() {
-        synchronized(retryTimestamps) {
-            retryTimestamps.clear()
-            retryState.set(RetryState.NORMAL)
-            logger.debug("Retry state reset")
+        val previousCount = attemptCounter.getAndSet(0)
+        if (previousCount > 0) {
+            logger.debug("Retry manager reset after {} attempts", previousCount)
         }
     }
-
-    fun getCurrentState(): RetryState = retryState.get()
 
     data class RetryAttempt(
         val attemptNumber: Int,
         val backoffMs: Long,
-        val state: RetryState,
     )
 }

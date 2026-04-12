@@ -36,13 +36,21 @@ class NotificationClientImpl(
         onNotification: (NotificationEventDto) -> Unit,
         onError: (Throwable) -> Unit,
     ) {
+        val token =
+            try {
+                jwtTokenProvider.getToken()
+            } catch (throwable: Throwable) {
+                onError(throwable)
+                return
+            }
+
         restClient
             .method(HttpMethod.GET)
             .uri("/namespace/$nid/application/$aid/sse-stream")
             .header("Accept", "text/event-stream")
             .header("Cache-Control", "no-cache")
             .header("Connection", "keep-alive")
-            .header("Authorization", "Bearer ${jwtTokenProvider.getToken()}")
+            .header("Authorization", "Bearer $token")
             .exchange { request, response ->
                 processResponse(
                     response,

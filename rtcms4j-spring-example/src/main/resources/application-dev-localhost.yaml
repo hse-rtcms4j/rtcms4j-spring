@@ -11,9 +11,9 @@ spring:
     application-id: 1
     api:
       # RTCMS4J gateway address for core api
-      core-base-url: http://localhost:8081/api/v1
+      core-base-url: http://localhost:8000/core/api/v1
       # RTCMS4J gateway address for notify api
-      notify-base-url: http://localhost:8082/api/v1
+      notify-base-url: http://localhost:8000/notify/api/v1
     keycloak:
       # Keycloak address employed by RTCMS4J
       server-url: http://localhost:8080
