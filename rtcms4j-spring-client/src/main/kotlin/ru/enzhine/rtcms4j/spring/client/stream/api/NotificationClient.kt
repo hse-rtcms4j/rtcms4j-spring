@@ -8,5 +8,6 @@ interface NotificationClient {
         interrupter: (InputStream) -> Unit,
         onNotification: (NotificationEventDto) -> Unit,
         onError: (Throwable) -> Unit,
+        onConnected: () -> Unit,
     )
 }

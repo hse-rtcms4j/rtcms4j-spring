@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{props.appTitle}}</title>
+    <style>
+        :root {
+            --bg-color: {{#props.colorTheme == 'dark'}}#1a1a1a{{/props.colorTheme == 'dark'}}{{^props.colorTheme == 'dark'}}#f5f5f5{{/props.colorTheme == 'dark'}};
+            --text-color: {{#props.colorTheme == 'dark'}}#ffffff{{/props.colorTheme == 'dark'}}{{^props.colorTheme == 'dark'}}#333333{{/props.colorTheme == 'dark'}};
+            --card-bg: {{#props.colorTheme == 'dark'}}#2d2d2d{{/props.colorTheme == 'dark'}}{{^props.colorTheme == 'dark'}}#ffffff{{/props.colorTheme == 'dark'}};
+            --border-color: {{#props.colorTheme == 'dark'}}#404040{{/props.colorTheme == 'dark'}}{{^props.colorTheme == 'dark'}}#e0e0e0{{/props.colorTheme == 'dark'}};
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .config-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .config-panel h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .config-item {
+            padding: 8px;
+            background: var(--bg-color);
+            border-radius: 5px;
+        }
+
+        .config-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .add-todo-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .todo-list {
+            list-style: none;
+        }
+
+        .todo-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .todo-item.completed {
+            background-color: {{props.completedTodoColor}};
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        .todo-item:not(.completed) {
+            background-color: {{props.pendingTodoColor}};
+        }
+
+        .todo-text {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .priority-LOW {
+            background: #48bb78;
+            color: white;
+        }
+
+        .priority-MEDIUM {
+            background: #ed8936;
+            color: white;
+        }
+
+        .priority-HIGH {
+            background: #f56565;
+            color: white;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background: #f56565;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover:not(:disabled) {
+            background: #e53e3e;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        .message.success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .message.error {
+            background: #f56565;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .counter {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .todo-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .todo-actions {
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{props.headerText}}</h1>
+            <p>Real-time configuration controlled UI</p>
+        </div>
+
+        <div class="config-panel">
+            <h3>🎮 Live Configuration</h3>
+            <div class="config-grid">
+                <div class="config-item">
+                    <span class="config-label">Max Todos:</span> {{props.maxTodos}}
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Max Todo Length:</span> {{props.maxTodoLength}}
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Show Checkboxes:</span> {{#props.showCompletionCheckboxes}}✅{{/props.showCompletionCheckboxes}}{{^props.showCompletionCheckboxes}}❌{{/props.showCompletionCheckboxes}}
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Allow Deletion:</span> {{#props.allowDeletion}}✅{{/props.allowDeletion}}{{^props.allowDeletion}}❌{{/props.allowDeletion}}
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Show Priority:</span> {{#props.showPriorityBadges}}✅{{/props.showPriorityBadges}}{{^props.showPriorityBadges}}❌{{/props.showPriorityBadges}}
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Color Theme:</span> {{props.colorTheme}}
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Auto Refresh:</span> {{#props.autoRefresh}}✅ ({{props.refreshIntervalSeconds}}s){{/props.autoRefresh}}{{^props.autoRefresh}}❌{{/props.autoRefresh}}
+                </div>
+            </div>
+        </div>
+
+        <div class="add-todo-form">
+            <h3>Add New Todo</h3>
+            <form id="todoForm">
+                <div class="form-group">
+                    <label for="todoText">Todo Text (max {{props.maxTodoLength}} chars):</label>
+                    <input type="text" id="todoText" maxlength="{{props.maxTodoLength}}" required>
+                </div>
+                {{#props.showPriorityBadges}}
+                <div class="form-group">
+                    <label for="todoPriority">Priority:</label>
+                    <select id="todoPriority">
+                        {{#priorities}}
+                        <option value="{{name}}">{{name}}</option>
+                        {{/priorities}}
+                    </select>
+                </div>
+                {{/props.showPriorityBadges}}
+                <button type="submit">Add Todo</button>
+            </form>
+        </div>
+
+        <div class="todo-container">
+            <h3>Your Todos ({{todos.size}} / {{props.maxTodos}})</h3>
+            <ul class="todo-list" id="todoList">
+                {{#todos}}
+                <li class="todo-item {{#completed}}completed{{/completed}}" data-id="{{id}}">
+                    {{#props.showCompletionCheckboxes}}
+                    <input type="checkbox" class="checkbox" {{#completed}}checked{{/completed}}>
+                    {{/props.showCompletionCheckboxes}}
+                    <span class="todo-text">{{text}}</span>
+                    {{#props.showPriorityBadges}}
+                    <span class="priority-badge priority-{{priority}}">{{priority}}</span>
+                    {{/props.showPriorityBadges}}
+                    <div class="todo-actions">
+                        {{#props.allowDeletion}}
+                        <button class="delete-btn" onclick="deleteTodo({{id}})">Delete</button>
+                        {{/props.allowDeletion}}
+                    </div>
+                </li>
+                {{/todos}}
+                {{^todos}}
+                <li class="todo-item">No todos yet. Add one above!</li>
+                {{/todos}}
+            </ul>
+        </div>
+
+        <div class="counter">
+            💡 Tip: Modify the remote properties in real-time and see the UI change instantly!
+            <br>
+            <small>Try changing maxTodos, colors, toggling features, or theme - all without restarting!</small>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+
+        function showMessage(message, type = 'success') {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}`;
+            msgDiv.textContent = message;
+            document.body.appendChild(msgDiv);
+            setTimeout(() => msgDiv.remove(), 3000);
+        }
+
+        async function addTodo(text, priority) {
+            const formData = new URLSearchParams();
+            formData.append('text', text);
+            formData.append('priority', priority);
+
+            try {
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(result.message);
+                    location.reload();
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error adding todo', 'error');
+            }
+        }
+
+        async function toggleTodo(id, checkbox) {
+            try {
+                const response = await fetch(`/api/todos/${id}/toggle`, {
+                    method: 'PUT'
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const todoItem = checkbox.closest('.todo-item');
+                    if (result.todo.completed) {
+                        todoItem.classList.add('completed');
+                    } else {
+                        todoItem.classList.remove('completed');
+                    }
+                    checkbox.checked = result.todo.completed;
+                } else {
+                    showMessage(result.message, 'error');
+                    checkbox.checked = !checkbox.checked;
+                }
+            } catch (error) {
+                showMessage('Error toggling todo', 'error');
+                checkbox.checked = !checkbox.checked;
+            }
+        }
+
+        async function deleteTodo(id) {
+            try {
+                const response = await fetch(`/api/todos/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(result.message);
+                    location.reload();
+                } else {
+                    showMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error deleting todo', 'error');
+            }
+        }
+
+        document.getElementById('todoForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const textInput = document.getElementById('todoText');
+            const text = textInput.value.trim();
+            const priority = document.getElementById('todoPriority')?.value || 'MEDIUM';
+
+            if (text) {
+                addTodo(text, priority);
+                textInput.value = '';
+            }
+        });
+
+        document.querySelectorAll('.checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const todoItem = e.target.closest('.todo-item');
+                const id = parseInt(todoItem.dataset.id);
+                toggleTodo(id, e.target);
+            });
+        });
+
+        // Auto-refresh logic
+        function setupAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+
+            {{#props.autoRefresh}}
+            autoRefreshInterval = setInterval(() => {
+                location.reload();
+            }, {{props.refreshIntervalSeconds}} * 1000);
+            {{/props.autoRefresh}}
+        }
+
+        setupAutoRefresh();
+    </script>
+</body>
+</html>

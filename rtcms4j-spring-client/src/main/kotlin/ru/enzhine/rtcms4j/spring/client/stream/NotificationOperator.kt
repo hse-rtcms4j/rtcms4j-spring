@@ -74,6 +74,7 @@ class NotificationOperator(
                         interrupter = this::interrupter,
                         onNotification = this::onNotification,
                         onError = this::onError,
+                        onConnected = this::onConnected,
                     )
                 }
         isRunning.set(true)
@@ -81,6 +82,10 @@ class NotificationOperator(
 
     private fun interrupter(inputStream: InputStream) {
         this.connection = inputStream
+    }
+
+    private fun onConnected() {
+        logger.info("RTCMS4J notifications connection established!")
     }
 
     private fun onNotification(notification: NotificationEventDto) {

@@ -35,6 +35,7 @@ class NotificationClientImpl(
         interrupter: (InputStream) -> Unit,
         onNotification: (NotificationEventDto) -> Unit,
         onError: (Throwable) -> Unit,
+        onConnected: () -> Unit,
     ) {
         val token =
             try {
@@ -57,6 +58,7 @@ class NotificationClientImpl(
                     interrupter,
                     onNotification,
                     onError,
+                    onConnected,
                 )
             }
     }
@@ -66,6 +68,7 @@ class NotificationClientImpl(
         interrupter: (InputStream) -> Unit,
         onNotification: (NotificationEventDto) -> Unit,
         onError: (Throwable) -> Unit,
+        onConnected: () -> Unit,
     ) = try {
         val statusCode = response.statusCode
         if (!statusCode.is2xxSuccessful) {
@@ -74,6 +77,7 @@ class NotificationClientImpl(
                 statusCode = statusCode,
             )
         }
+        onConnected()
 
         val inputStream = response.body
         interrupter(inputStream)

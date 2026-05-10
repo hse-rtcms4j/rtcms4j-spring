@@ -1,4 +1,4 @@
-package ru.enzhine.rtcms4j.example.config.props
+package dto
 
 import org.springframework.stereotype.Component
 import ru.enzhine.rtcms4j.spring.client.annotation.RemoteConfiguration

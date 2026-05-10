@@ -1,7 +1,13 @@
 server:
-  port: 8078
+  port: 81
 
 spring:
+  application:
+    name: todo-dynamic-control
+  mustache:
+    suffix: .mustache
+    prefix: classpath:/templates/
+
   rtcms4j:
     enabled: true
     namespace-id: 2

@@ -1,5 +1,5 @@
 server:
-  port: 8079
+  port: 81
 
 spring:
   rtcms4j:
