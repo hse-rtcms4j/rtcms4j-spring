@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${props.appTitle}">Todo App</title>
+    <style>
+        /* Dynamic theme variables - set by Thymeleaf on page load */
+        :root {
+            --completed-color: [[${props.completedTodoColor}]];
+            --pending-color: [[${props.pendingTodoColor}]];
+        }
+
+        [data-theme="DARK"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --card-bg: #2d2d2d;
+            --border-color: #404040;
+        }
+
+        [data-theme="LIGHT"] {
+            --bg-color: #f5f5f5;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .config-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .config-panel h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auto-refresh-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .auto-refresh-on {
+            background: #48bb78;
+            color: white;
+        }
+
+        .auto-refresh-off {
+            background: #f56565;
+            color: white;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .config-item {
+            padding: 10px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .config-label {
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .config-value {
+            color: var(--text-color);
+        }
+
+        .add-todo-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .todo-list {
+            list-style: none;
+        }
+
+        .todo-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .todo-item.completed {
+            background-color: var(--completed-color);
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        .todo-item:not(.completed) {
+            background-color: var(--pending-color);
+        }
+
+        .todo-text {
+            flex: 1;
+            word-break: break-word;
+            font-size: 16px;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+        }
+
+        .priority-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .priority-LOW {
+            background: #48bb78;
+            color: white;
+        }
+
+        .priority-MEDIUM {
+            background: #ed8936;
+            color: white;
+        }
+
+        .priority-HIGH {
+            background: #f56565;
+            color: white;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .delete-btn {
+            background: #f56565;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover:not(:disabled) {
+            background: #e53e3e;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: bold;
+        }
+
+        .message.success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .message.error {
+            background: #f56565;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .info-box {
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .refresh-notice {
+            margin-top: 10px;
+            padding: 8px;
+            background: #667eea20;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .todo-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .todo-actions {
+                justify-content: flex-end;
+            }
+
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body th:attr="data-theme=${props.colorTheme.toString()}">
+<div class="container">
+    <div class="header">
+        <h1 th:text="${props.headerText}">Dynamic Todo List</h1>
+        <p>Real-time configuration controlled UI | Changes take effect on page refresh!</p>
+    </div>
+
+    <div class="config-panel">
+        <h3>
+            🎮 Live Configuration
+            <span th:class="${props.autoRefresh} ? 'auto-refresh-badge auto-refresh-on' : 'auto-refresh-badge auto-refresh-off'"
+                  th:text="${props.autoRefresh} ? '🔄 Auto-Refresh ON' : '⏸️ Auto-Refresh OFF'"></span>
+        </h3>
+        <div class="config-grid">
+            <div class="config-item">
+                <span class="config-label">📝 Max Todos:</span>
+                <span class="config-value" th:text="${props.maxTodos}"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">📏 Max Todo Length:</span>
+                <span class="config-value" th:text="${props.maxTodoLength} + ' characters'"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">☑️ Show Checkboxes:</span>
+                <span class="config-value" th:text="${props.showCompletionCheckboxes} ? '✅ Enabled' : '❌ Disabled'"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">🗑️ Allow Deletion:</span>
+                <span class="config-value" th:text="${props.allowDeletion} ? '✅ Enabled' : '❌ Disabled'"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">🏷️ Show Priority Badges:</span>
+                <span class="config-value" th:text="${props.showPriorityBadges} ? '✅ Enabled' : '❌ Disabled'"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">🎨 Color Theme:</span>
+                <span class="config-value" th:text="${props.colorTheme.toString()} == 'DARK' ? '🌙 Dark' : '☀️ Light'"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">🎯 Default Priority:</span>
+                <span class="config-value" th:text="${props.defaultPriority}"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">🎨 Completed Color:</span>
+                <span class="config-value" th:text="${props.completedTodoColor}"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">🎨 Pending Color:</span>
+                <span class="config-value" th:text="${props.pendingTodoColor}"></span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">✅ Success Message:</span>
+                <span class="config-value" th:text="${props.successMessage}"></span>
+            </div>
+        </div>
+        <div th:if="${props.autoRefresh}" class="refresh-notice">
+            🔄 Page will auto-refresh every <span th:text="${props.refreshIntervalSeconds}"></span> seconds to show latest configuration changes
+        </div>
+        <div th:unless="${props.autoRefresh}" class="refresh-notice">
+            ⏸️ Auto-refresh is disabled. Refresh the page manually to see configuration changes.
+        </div>
+    </div>
+
+    <div class="add-todo-form">
+        <h3>✨ Add New Todo</h3>
+        <form id="todoForm">
+            <div class="form-group">
+                <label for="todoText">Todo Text (max <span th:text="${props.maxTodoLength}"></span> characters):</label>
+                <input type="text" id="todoText"
+                       th:maxlength="${props.maxTodoLength}"
+                       placeholder="Enter your task here..."
+                       required>
+            </div>
+            <div class="form-group" th:if="${props.showPriorityBadges}">
+                <label for="todoPriority">Priority:</label>
+                <select id="todoPriority">
+                    <option th:each="priority : ${priorities}"
+                            th:value="${priority.name()}"
+                            th:text="${priority.name()}"
+                            th:selected="${priority == props.defaultPriority}">
+                    </option>
+                </select>
+            </div>
+            <button type="submit">➕ Add Todo</button>
+        </form>
+    </div>
+
+    <div class="todo-container">
+        <h3>📋 Your Todos (<span th:text="${todos.size()}"></span> / <span th:text="${props.maxTodos}"></span>)</h3>
+        <ul class="todo-list" id="todoList">
+            <li th:each="todo : ${todos}"
+                class="todo-item"
+                th:classappend="${todo.completed} ? 'completed'"
+                th:attr="data-id=${todo.id}">
+
+                <div th:if="${props.showCompletionCheckboxes}" class="todo-actions">
+                    <input type="checkbox" class="checkbox" th:checked="${todo.completed}">
+                </div>
+
+                <span class="todo-text" th:text="${todo.text}"></span>
+
+                <div th:if="${props.showPriorityBadges}">
+                        <span class="priority-badge" th:class="'priority-' + ${todo.priority.name()}"
+                              th:text="${todo.priority.name()}"></span>
+                </div>
+
+                <div class="todo-actions" th:if="${props.allowDeletion}">
+                    <button class="delete-btn" th:attr="onclick='deleteTodo(' + ${todo.id} + ')'">🗑️ Delete</button>
+                </div>
+            </li>
+            <li th:if="${todos.isEmpty()}" class="todo-item" style="justify-content: center; text-align: center;">
+                ✨ No todos yet. Add your first task above! ✨
+            </li>
+        </ul>
+    </div>
+
+    <div class="info-box">
+        💡 <strong>Pro Tip:</strong> Modify the remote properties in real-time and
+        <span th:if="${props.autoRefresh}">watch the page auto-refresh to see changes!</span>
+        <span th:unless="${props.autoRefresh}">refresh the page to see the UI update instantly!</span>
+        <br>
+        <small>Try changing maxTodos, colors, toggling features, theme, or default priority - all without restarting the application!</small>
+    </div>
+</div>
+
+<script>
+    let autoRefreshInterval = null;
+
+    function showMessage(message, type = 'success') {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${type}`;
+        msgDiv.textContent = message;
+        document.body.appendChild(msgDiv);
+        setTimeout(() => msgDiv.remove(), 3000);
+    }
+
+    async function addTodo(text, priority) {
+        const formData = new URLSearchParams();
+        formData.append('text', text);
+        formData.append('priority', priority);
+
+        try {
+            const response = await fetch('/api/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showMessage(result.message);
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showMessage(result.message, 'error');
+            }
+        } catch (error) {
+            showMessage('Error adding todo', 'error');
+        }
+    }
+
+    async function toggleTodo(id, checkbox) {
+        try {
+            const response = await fetch(`/api/todos/${id}/toggle`, {
+                method: 'PUT'
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                const todoItem = checkbox.closest('.todo-item');
+                if (result.todo.completed) {
+                    todoItem.classList.add('completed');
+                } else {
+                    todoItem.classList.remove('completed');
+                }
+                checkbox.checked = result.todo.completed;
+                showMessage(`Todo ${result.todo.completed ? 'completed' : 'uncompleted'}!`, 'success');
+            } else {
+                showMessage(result.message, 'error');
+                checkbox.checked = !checkbox.checked;
+            }
+        } catch (error) {
+            showMessage('Error toggling todo', 'error');
+            checkbox.checked = !checkbox.checked;
+        }
+    }
+
+    async function deleteTodo(id) {
+        if (!confirm('Are you sure you want to delete this todo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/todos/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showMessage(result.message);
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showMessage(result.message, 'error');
+            }
+        } catch (error) {
+            showMessage('Error deleting todo', 'error');
+        }
+    }
+
+    // Handle form submission
+    document.getElementById('todoForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const textInput = document.getElementById('todoText');
+        const text = textInput.value.trim();
+
+        const maxLength = parseInt('[[${props.maxTodoLength}]]');
+        if (text.length > maxLength) {
+            showMessage(`Todo text cannot exceed ${maxLength} characters!`, 'error');
+            return;
+        }
+
+        let priority = 'MEDIUM';
+        const showPriorityBadges = '[[${props.showPriorityBadges}]]' === 'true';
+        if (showPriorityBadges) {
+            const prioritySelect = document.getElementById('todoPriority');
+            if (prioritySelect) {
+                priority = prioritySelect.value;
+            }
+        } else {
+            priority = '[[${props.defaultPriority}]]';
+        }
+
+        if (text) {
+            addTodo(text, priority);
+            textInput.value = '';
+        } else {
+            showMessage('Please enter a todo text', 'error');
+        }
+    });
+
+    // Attach checkbox event listeners
+    function attachCheckboxListeners() {
+        document.querySelectorAll('.checkbox').forEach(checkbox => {
+            // Remove existing listener to avoid duplicates
+            checkbox.removeEventListener('change', checkbox._listener);
+            const listener = (e) => {
+                e.stopPropagation();
+                const todoItem = e.target.closest('.todo-item');
+                const id = parseInt(todoItem.dataset.id);
+                toggleTodo(id, e.target);
+            };
+            checkbox.addEventListener('change', listener);
+            checkbox._listener = listener;
+        });
+    }
+
+    // Setup auto-refresh (only if enabled by backend)
+    function setupAutoRefresh() {
+        const autoRefresh = '[[${props.autoRefresh}]]' === 'true';
+        const refreshInterval = parseInt('[[${props.refreshIntervalSeconds}]]');
+
+        if (autoRefresh && refreshInterval > 0 && !autoRefreshInterval) {
+            autoRefreshInterval = setInterval(() => {
+                location.reload();
+            }, refreshInterval * 1000);
+            console.log(`Auto-refresh enabled: reloading every ${refreshInterval} seconds`);
+        } else if (!autoRefresh && autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+            console.log('Auto-refresh disabled');
+        }
+    }
+
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        attachCheckboxListeners();
+        setupAutoRefresh();
+    });
+</script>
+</body>
+</html>

@@ -20,17 +20,17 @@ class TodoProperties(
     @field:JsonPropertyDescription("Background color for pending todos")
     val pendingTodoColor: String = "#f8d7da",
     @field:JsonPropertyDescription("Message shown when adding todo")
-    val successMessage: String = "[V] Todo added successfully!",
+    val successMessage: String = "Todo added successfully!",
     @field:JsonPropertyDescription("Message shown when max todos reached")
-    val maxTodosErrorMessage: String = "[X] Maximum limit of %d todos reached!",
+    val maxTodosErrorMessage: String = "Maximum limit of %d todos reached!",
     @field:JsonPropertyDescription("Message shown when todo text too long")
-    val tooLongErrorMessage: String = "[X] Todo text cannot exceed %d characters!",
+    val tooLongErrorMessage: String = "Todo text cannot exceed %d characters!",
     @field:JsonPropertyDescription("Title of the application")
     val appTitle: String = "Real-time Controlled Todo App",
     @field:JsonPropertyDescription("Header text to display")
     val headerText: String = "My Dynamic Todo List",
     @field:JsonPropertyDescription("Color theme (light/dark)")
-    val colorTheme: String = "light",
+    val colorTheme: ColorTheme = ColorTheme.LIGHT,
     @field:JsonPropertyDescription("Whether to auto-refresh the list")
     val autoRefresh: Boolean = false,
     @field:JsonPropertyDescription("Refresh interval in seconds (if auto-refresh enabled)")
@@ -44,5 +44,10 @@ class TodoProperties(
         LOW,
         MEDIUM,
         HIGH,
+    }
+
+    enum class ColorTheme {
+        LIGHT,
+        DARK,
     }
 }

@@ -30,9 +30,16 @@ class TodoController(
     @ResponseBody
     fun addTodo(
         @RequestParam text: String,
-        @RequestParam priority: TodoProperties.TodoPriority,
+        @RequestParam priority: String,
     ): ResponseEntity<Map<String, Any>> {
-        val result = todoService.addTodo(text, priority)
+        val priorityEnum =
+            try {
+                TodoProperties.TodoPriority.valueOf(priority)
+            } catch (e: IllegalArgumentException) {
+                todoProperties.defaultPriority
+            }
+
+        val result = todoService.addTodo(text, priorityEnum)
         return when (result) {
             is TodoService.Result.Success ->
                 ResponseEntity.ok(
@@ -48,6 +55,7 @@ class TodoController(
                             ),
                     ),
                 )
+
             is TodoService.Result.Error ->
                 ResponseEntity.badRequest().body(
                     mapOf(
@@ -76,6 +84,7 @@ class TodoController(
                             ),
                     ),
                 )
+
             is TodoService.Result.Error ->
                 ResponseEntity.badRequest().body(
                     mapOf(
@@ -100,6 +109,7 @@ class TodoController(
                         "message" to "Todo deleted successfully",
                     ),
                 )
+
             is TodoService.Result.Error ->
                 ResponseEntity.badRequest().body(
                     mapOf(
@@ -109,8 +119,4 @@ class TodoController(
                 )
         }
     }
-
-    @GetMapping("/api/config")
-    @ResponseBody
-    fun getConfig() = todoProperties
 }
