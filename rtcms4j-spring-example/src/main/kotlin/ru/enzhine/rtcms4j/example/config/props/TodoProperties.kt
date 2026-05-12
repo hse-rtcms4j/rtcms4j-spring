@@ -15,10 +15,6 @@ class TodoProperties(
     val showCompletionCheckboxes: Boolean = true,
     @field:JsonPropertyDescription("Whether to allow todo deletion")
     val allowDeletion: Boolean = true,
-    @field:JsonPropertyDescription("Background color for completed todos")
-    val completedTodoColor: String = "#d4edda",
-    @field:JsonPropertyDescription("Background color for pending todos")
-    val pendingTodoColor: String = "#f8d7da",
     @field:JsonPropertyDescription("Message shown when adding todo")
     val successMessage: String = "Todo added successfully!",
     @field:JsonPropertyDescription("Message shown when max todos reached")

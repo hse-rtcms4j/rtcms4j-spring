@@ -6,16 +6,13 @@
     <title th:text="${props.appTitle}">Todo App</title>
     <style>
         /* Dynamic theme variables - set by Thymeleaf on page load */
-        :root {
-            --completed-color: [[${props.completedTodoColor}]];
-            --pending-color: [[${props.pendingTodoColor}]];
-        }
-
         [data-theme="DARK"] {
             --bg-color: #1a1a1a;
             --text-color: #ffffff;
             --card-bg: #2d2d2d;
             --border-color: #404040;
+            --completed-color: #104020;
+            --pending-color: #591d1d;
         }
 
         [data-theme="LIGHT"] {
@@ -23,6 +20,8 @@
             --text-color: #333333;
             --card-bg: #ffffff;
             --border-color: #e0e0e0;
+            --completed-color: #d4edda;
+            --pending-color: #f8d7da;
         }
 
         * {
@@ -381,14 +380,6 @@
             <div class="config-item">
                 <span class="config-label">🎯 Default Priority:</span>
                 <span class="config-value" th:text="${props.defaultPriority}"></span>
-            </div>
-            <div class="config-item">
-                <span class="config-label">🎨 Completed Color:</span>
-                <span class="config-value" th:text="${props.completedTodoColor}"></span>
-            </div>
-            <div class="config-item">
-                <span class="config-label">🎨 Pending Color:</span>
-                <span class="config-value" th:text="${props.pendingTodoColor}"></span>
             </div>
             <div class="config-item">
                 <span class="config-label">✅ Success Message:</span>
